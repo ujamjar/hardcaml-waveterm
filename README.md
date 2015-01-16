@@ -3,8 +3,8 @@
 A text (unicode) based digital waveform viewer library.
 
 * Lambda-term based interactive viewer app
-* HTML output (no fancy canvas needed - just <pre> and html escape codes)
-* UTF-8 output (for UTF aware terminals and editors with optional styling)
+* HTML output (no fancy canvas needed - just \<pre\> and html escape codes)
+* UTF-8 output (for UTF aware terminals and editors with optional ANSI styling)
 
 # Examples
 
