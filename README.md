@@ -8,13 +8,13 @@ A text (unicode) based digital waveform viewer library.
 
 # Examples
 
-* [HTML output with styling](test/index.html)
+* [HTML output with styling](www.ujamjar.com/hardcaml/wave-term/index.html)
 
 ```
 $ wavehtml > index.html # copy and paste <pre> section
 ```
 
-* [UTF-8 without styling and different rendering parameters](test/wave.txt)
+* [UTF-8 without styling and different rendering parameters](https://raw.githubusercontent.com/ujamjar/hardcaml-wave-term/master/test/wave.txt)
 
 ```
 $ ./waveutf8 -nostyle -width 1 -height 1 -rows 10 -cols 60 > temp
