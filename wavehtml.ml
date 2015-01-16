@@ -1,5 +1,5 @@
 open Gfx
-module G = Gfx_html.Api
+module G = Gfx.In_memory.Api
 module R = Render.Make(G)
 
 type state = 
@@ -20,7 +20,7 @@ let get_initial_window_sizes ui_size state =
   end
 
 let draw_ui ctx state = 
-  let open Gfx_html.Api in
+  let open G in
   let open Gfx.Style in
 
   let bounds = get_bounds ctx in
@@ -38,7 +38,7 @@ let draw_ui ctx state =
 
 let main () = 
   let rows, cols = 31, 200 in
-  let ctx = Gfx_html.init ~rows ~cols in
+  let ctx = Gfx.In_memory.init ~rows ~cols in
   let state = 
     {
       signal_window_width = 15;

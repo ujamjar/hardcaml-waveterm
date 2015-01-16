@@ -94,7 +94,7 @@ module type Brick = sig
     ctx:ctx -> style:style -> bounds:rect ->
     r:int -> c:int -> char -> unit
 
-  val draw_piece : (* can probably get rid of this! need unicodes! *)
+  val draw_piece : 
     ctx:ctx -> style:style -> bounds:rect ->
     r:int -> c:int -> piece -> unit
 
@@ -137,6 +137,42 @@ module Build(B : Brick) = struct
     for r=1 to (h-2) do draw_piece ~ctx ~style ~bounds ~r ~c:0 V done;
     for r=1 to (h-2) do draw_piece ~ctx ~style ~bounds ~r ~c:(w-1) V done;
     draw_string ~ctx ~style ~bounds:{bounds with w=w-1} ~r:0 ~c:1 label
+
+end
+
+module In_memory = struct
+
+  type point = int * Style.t
+
+  module Brick = struct
+
+    type ctx = point array array 
+    type style = Style.t
+
+    let rows ctx = Array.length ctx
+    let cols ctx = try Array.length ctx.(0) with _ -> 0
+
+    let get_bounds ctx = { r=0; c=0; h=rows ctx; w=cols ctx }
+
+    let get_style s = s
+
+    let draw_char ~ctx ~style ~bounds ~r ~c ch = 
+      if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
+        ctx.(bounds.r + r).(bounds.c + c) <- Char.code ch, style
+      end
+
+    let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
+      if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
+        ctx.(bounds.r + r).(bounds.c + c) <- pieces.(int_of_piece piece), style
+      end
+
+  end
+
+  module Api = Build(Brick)
+
+  let init ~rows ~cols = 
+    let ch = Char.code ' ' in
+    Array.init rows (fun r -> Array.init cols (fun c -> ch, Style.default))
 
 end
 

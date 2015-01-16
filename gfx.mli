@@ -78,3 +78,14 @@ end
 module Build(B : Brick) : Api
   with type ctx = B.ctx
 
+module In_memory : sig
+
+  type point = int * Style.t
+
+  module Api : Api 
+    with type ctx = point array array
+
+  val init : rows:int -> cols:int -> Api.ctx
+
+end
+

@@ -1,37 +1,3 @@
-type point = int * Gfx.Style.t
-
-let init ~rows ~cols = 
-  let ch = Char.code ' ' in
-  Array.init rows (fun r -> Array.init cols (fun c -> ch, Gfx.Style.default))
-
-module Brick = struct
-
-  open Gfx
-
-  type ctx = point array array 
-  type style = Gfx.Style.t
-
-  let rows ctx = Array.length ctx
-  let cols ctx = try Array.length ctx.(0) with _ -> 0
-
-  let get_bounds ctx = { r=0; c=0; h=rows ctx; w=cols ctx }
-
-  let get_style s = s
-
-  let draw_char ~ctx ~style ~bounds ~r ~c ch = 
-    if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
-      ctx.(bounds.r + r).(bounds.c + c) <- Char.code ch, style
-    end
-
-  let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
-    if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
-      ctx.(bounds.r + r).(bounds.c + c) <- Gfx.(pieces.(int_of_piece piece)), style
-    end
-
-end
-
-module Api = Gfx.Build(Brick)
-
 type styler = 
   {
     start : (string -> unit) -> unit;
@@ -89,6 +55,7 @@ let term_styler =
 
 let write_html_escape ?styler os ctx = 
   let open Gfx in
+  let open In_memory in
   let bounds = Api.get_bounds ctx in
   let () = match styler with Some(s) -> s.start os | None -> () in 
   for r=0 to bounds.h-1 do
@@ -104,6 +71,7 @@ let write_html_escape ?styler os ctx =
 
 let write_utf8 ?styler os ctx = 
   let open Gfx in
+  let open In_memory in
   let put c = 
     if c <= 0x7f then begin os (String.init 1 (fun _ -> Char.chr c))
     end else if c <= 0x7FF then begin

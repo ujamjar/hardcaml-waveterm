@@ -1,10 +1,3 @@
-type point = int * Gfx.Style.t
-
-module Api : Gfx.Api 
-  with type ctx = point array array
-
-val init : rows:int -> cols:int -> Api.ctx
-
 type styler = 
   {
     start : (string -> unit) -> unit;
@@ -16,7 +9,7 @@ type styler =
 val html_styler : styler
 val term_styler : styler
 
-val write_html_escape : ?styler:styler -> (string -> unit) -> Api.ctx -> unit
+val write_html_escape : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
 
-val write_utf8 : ?styler:styler -> (string -> unit) -> Api.ctx -> unit
+val write_utf8 : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
 
