@@ -4,19 +4,10 @@ open LTerm_key
 open CamomileLibrary
 
 open Gfx
+open Data
+(*
 module G = Gfx_lterm.Api
 module R = Render.Make(G)
-
-type state = 
-  {
-    mutable signal_window_width : int;
-    mutable value_window_width : int;
-    mutable waveform_window_width : int;
-    wave : Render.t;
-  }
-
-let draw_cursor ~matrix ~ctx ~bounds n = 
-  LTerm_draw.set_style matrix.(20).(20) LTerm_style.{ none with background = Some red }
 
 let draw_ui ui matrix state = 
   let open Gfx_lterm.Api in
@@ -37,6 +28,9 @@ let draw_ui ui matrix state =
   R.draw_signals ~style:{style with fg=Blue} ~border ~ctx ~bounds:sbox ~state:state.wave ();
   R.draw_values ~style:{style with fg=Yellow} ~border ~ctx ~bounds:vbox ~state:state.wave ();
   R.draw_wave ~style:{style with fg=Green} ~border ~ctx ~bounds:wbox ~state:state.wave ()
+*)
+
+module Ui = Data.Ui(Gfx_lterm.Api)
 
 let cycles state = 
   Array.fold_left (fun m (_,w) -> 
@@ -107,36 +101,13 @@ let get_initial_window_sizes ui_size state =
   end
 
 let run_wave () = 
-  let state = 
-    {
-      signal_window_width = 0;
-      value_window_width = 0;
-      waveform_window_width = 0;
-      wave = 
-        Render.{
-          wave_width = 3;
-          wave_height = 1;
-          wave_cycle = 0;
-          waves  = [|
-            "clock", Wave.Clock;
-            "a", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-            "b", Wave.Data(Array.init 50 (fun _ -> Random.int 1000-500));
-            "c", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-            "b", Wave.Data(Array.init 50 (fun _ -> Random.int 10));
-            "b", Wave.Data(Array.init 50 (fun _ -> Random.int 3));
-            "d", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-            "e", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-            "b", Wave.Data(Array.init 50 (fun _ -> Random.int 10-5));
-            "clock2", Wave.Clock;
-            "b", Wave.Data(Array.init 50 (fun _ -> Random.int 20-10));
-            "f", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-          |];
-        }
-    }
-  in
+  let state = state 80 3 1 in
   lwt term = Lazy.force LTerm.stdout in
-  (*lwt ui = LTerm_ui.create term (fun ui matrix -> draw_wave_test ui matrix) in*)
-  lwt ui = LTerm_ui.create term (fun ui matrix -> draw_ui ui matrix state) in
+  lwt ui = LTerm_ui.create term (fun ui matrix -> 
+    let size = LTerm_ui.size ui in
+    let ctx = LTerm_draw.context matrix size in
+    Ui.draw ctx state) 
+  in
   let size = LTerm_ui.size ui in
   get_initial_window_sizes size.cols state;
   try_lwt

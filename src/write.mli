@@ -10,7 +10,7 @@ val no_styler : styler
 val html_styler : styler
 val term_styler : styler
 
-val write_html_escape : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
+val html_escape : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
 
-val write_utf8 : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
+val utf8 : ?styler:styler -> (string -> unit) -> Gfx.In_memory.Api.ctx -> unit
 

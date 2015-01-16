@@ -61,7 +61,7 @@ let term_styler =
     finish = close_style;
   }
 
-let write_html_escape ?(styler=no_styler) os ctx = 
+let html_escape ?(styler=no_styler) os ctx = 
   let open Gfx in
   let open In_memory in
   let bounds = Api.get_bounds ctx in
@@ -76,7 +76,7 @@ let write_html_escape ?(styler=no_styler) os ctx =
   done;
   styler.finish os
 
-let write_utf8 ?(styler=no_styler) os ctx = 
+let utf8 ?(styler=no_styler) os ctx = 
   let open Gfx in
   let open In_memory in
   let put c = 
