@@ -1,15 +1,16 @@
-type t = 
-  {
-    mutable wave_width : int;
-    mutable wave_height : int;
-    mutable wave_cycle : int;
-    waves : Wave.t array;
-  }
-
-module Make(G : Gfx.Api) = struct
+module Make(G : Gfx.Api) (W : Wave.S) = struct
 
   open Gfx
   open G
+
+  type wt = W.t
+  type t = 
+    {
+      mutable wave_width : int;
+      mutable wave_height : int;
+      mutable wave_cycle : int;
+      waves : wt Wave.t array;
+    }
 
   let get_wave_width = function
     | w,Wave.Clock -> w, (w+1)*2
@@ -46,31 +47,27 @@ module Make(G : Gfx.Api) = struct
     let rec f prev c i = 
       if i = (off+cnt) then ()
       else 
-        let cur = data.(i) in
-        begin match prev, cur with
-        | 0, 0 -> begin
+        let cur = W.get data i in
+        if W.(compare prev zero && compare cur zero) then begin
           for i=0 to w do draw_piece ~ctx ~style ~bounds ~r:(0+h+1) ~c:(c+i) H done
-        end
-        | 1, 0 -> begin
+        end else if W.(compare prev one && compare cur zero) then begin
           draw_piece ~ctx ~style ~bounds ~r:0 ~c BL;
           for i=0+1 to 0+h+1 do draw_piece ~ctx ~style ~bounds ~r:i ~c V done;
           draw_piece ~ctx ~style ~bounds ~r:(0+h+1) ~c TR;
           for i=1 to w do draw_piece ~ctx ~style ~bounds ~r:(0+h+1) ~c:(c+i) H done
-        end
-        | 0, 1 -> begin
+        end else if W.(compare prev zero && compare cur one) then begin
           draw_piece ~ctx ~style ~bounds ~r:0 ~c BR;
           for i=0+1 to 0+h+1 do draw_piece ~ctx ~style ~bounds ~r:i ~c V done;
           draw_piece ~ctx ~style ~bounds ~r:(0+h+1) ~c TL;
           for i=1 to w do draw_piece ~ctx ~style ~bounds ~r:0 ~c:(c+i) H done
-        end
-        | 1, 1 -> begin
+        end else if W.(compare prev one && compare cur one) then begin
           for i=0 to w do draw_piece ~ctx ~style ~bounds ~r:0 ~c:(c+i) H done
-        end
-        | _ -> failwith "not binary data"
+        end else begin
+          failwith "not binary data"
         end;
         f cur (c+w+1) (i+1)
     in
-    f (try data.(off-1) with _ -> data.(off)) 0 off
+    f (try W.get data (off-1) with _ -> W.get data off) 0 off
 
   let draw_data ~ctx ~style ~bounds ~w ~h ~data ~off ~cnt = 
     let draw_text r c cnt str = 
@@ -88,10 +85,10 @@ module Make(G : Gfx.Api) = struct
     let rec f prev prev_cnt c i = 
       let r = 0 in
       if i = (off+cnt) then 
-        (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (string_of_int prev))
+        (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (W.to_str prev))
       else
-        let cur = data.(i) in
-        if prev = cur then begin
+        let cur = W.get data i in
+        if W.compare prev cur then begin
           for c=c to c+w do
             draw_piece ~ctx ~style ~bounds ~r ~c H;
             draw_piece ~ctx ~style ~bounds ~r:(r+h+1) ~c H;
@@ -105,11 +102,11 @@ module Make(G : Gfx.Api) = struct
             draw_piece ~ctx ~style ~bounds ~r ~c H;
             draw_piece ~ctx ~style ~bounds ~r:(r+h+1) ~c H;
           done;
-          (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (string_of_int prev));
+          (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (W.to_str prev));
           f cur w (c+w+1) (i+1)
         end
     in
-    f (try data.(off-1) with _ -> data.(off)) (-1) 0 off
+    f (try W.get data (off-1) with _ -> W.get data off) (-1) 0 off
 
   let rec draw_iter i bounds state f = 
     if i < Array.length state.waves && bounds.h > 0 then begin
@@ -143,12 +140,12 @@ module Make(G : Gfx.Api) = struct
           | Wave.Clock ->
             draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
           | Wave.Binary data ->
-            let off = min (Array.length data - 1) off in
-            let cnt = max 0 (min cnt (Array.length data - off)) in
+            let off = min (W.length data - 1) off in
+            let cnt = max 0 (min cnt (W.length data - off)) in
             draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt
           | Wave.Data data ->
-            let off = min (Array.length data - 1) off in
-            let cnt = max 0 (min cnt (Array.length data - off)) in
+            let off = min (W.length data - 1) off in
+            let cnt = max 0 (min cnt (W.length data - off)) in
             draw_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt)
     end
 
@@ -177,7 +174,7 @@ module Make(G : Gfx.Api) = struct
           | Wave.Clock -> ()
           | Wave.Binary d | Wave.Data d ->
             let off = state.wave_cycle in
-            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (string_of_int d.(off)))
+            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str (W.get d off)))
     end
 
 end
