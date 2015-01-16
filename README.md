@@ -8,7 +8,7 @@ A text (unicode) based digital waveform viewer library.
 
 # Examples
 
-* [HTML output with styling](www.ujamjar.com/hardcaml/wave-term/index.html)
+* [HTML output with styling](http://www.ujamjar.com/hardcaml/wave-term/index.html)
 
 ```
 $ wavehtml > index.html # copy and paste <pre> section
