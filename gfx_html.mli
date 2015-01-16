@@ -6,6 +6,7 @@ type styler =
     finish : (string -> unit) -> unit;
   }
 
+val no_styler : styler
 val html_styler : styler
 val term_styler : styler
 

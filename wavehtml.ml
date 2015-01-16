@@ -37,7 +37,7 @@ let draw_ui ctx state =
   R.draw_wave ~style:{style with fg=Green} ~border ~ctx ~bounds:wbox ~state:state.wave ()
 
 let main () = 
-  let rows, cols = 31, 200 in
+  let rows, cols = 31, 100 in
   let ctx = Gfx.In_memory.init ~rows ~cols in
   let state = 
     {

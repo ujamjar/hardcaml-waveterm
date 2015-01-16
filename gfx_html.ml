@@ -6,6 +6,14 @@ type styler =
     finish : (string -> unit) -> unit;
   }
 
+let no_styler = 
+  {
+    start = (fun _ -> ());
+    set = (fun _ _ -> ());
+    eol = (fun _ -> ());
+    finish = (fun _ -> ());
+  }
+
 let html_styler = 
   let open Gfx.Style in
   let get_colour = function
@@ -53,23 +61,22 @@ let term_styler =
     finish = close_style;
   }
 
-let write_html_escape ?styler os ctx = 
+let write_html_escape ?(styler=no_styler) os ctx = 
   let open Gfx in
   let open In_memory in
   let bounds = Api.get_bounds ctx in
-  let () = match styler with Some(s) -> s.start os | None -> () in 
+  styler.start os;
   for r=0 to bounds.h-1 do
     for c=0 to bounds.w-1 do (* TODO styling *)
-      let () = match styler with Some(s) -> s.set os (snd ctx.(r).(c)) | None -> () in 
+      styler.set os (snd ctx.(r).(c));
       os ("&#" ^ string_of_int (fst ctx.(r).(c)))
     done;
-    let () = match styler with Some(s) -> s.eol os | None -> () in 
+    styler.eol os;
     os "\n"
   done;
-  let () = match styler with Some(s) -> s.finish os | None -> () in 
-  ()
+  styler.finish os
 
-let write_utf8 ?styler os ctx = 
+let write_utf8 ?(styler=no_styler) os ctx = 
   let open Gfx in
   let open In_memory in
   let put c = 
@@ -87,15 +94,14 @@ let write_utf8 ?styler os ctx =
       failwith "extend utf-8 writer!"
   in
   let bounds = Api.get_bounds ctx in
-  let () = match styler with Some(s) -> s.start os | None -> () in 
+  styler.start os;
   for r=0 to bounds.h-1 do
     for c=0 to bounds.w-1 do 
-      let () = match styler with Some(s) -> s.set os (snd ctx.(r).(c)) | None -> () in 
+      styler.set os (snd ctx.(r).(c));
       put (fst ctx.(r).(c))
     done;
-    let () = match styler with Some(s) -> s.eol os | None -> () in 
+    styler.eol os;
     os "\n"
   done;
-  let () = match styler with Some(s) -> s.finish os | None -> () in 
-  ()
+  styler.finish os
 
