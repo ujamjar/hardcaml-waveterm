@@ -24,11 +24,17 @@ module Make (G : Gfx.Api) : sig
   val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
     w:int -> h:int -> data:int array -> off:int -> cnt:int -> unit
 
-  val draw_wave : ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit
+  val draw_wave : 
+    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
+    ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit -> unit
   
-  val draw_signals : ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit
+  val draw_signals : 
+    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
+    ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit -> unit
 
-  val draw_values : ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit
+  val draw_values : 
+    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
+    ctx:G.ctx -> bounds:Gfx.rect -> state:t -> unit -> unit
 
 end
 

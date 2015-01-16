@@ -118,43 +118,67 @@ module Make(G : Gfx.Api) = struct
       draw_iter (i+1) { bounds with r = bounds.r + wah; h = bounds.h - wah } state f
     end
 
-  let draw_wave ~ctx ~bounds ~state = 
-    let style = get_style Gfx.Style.{ fg=Green; bg=Black; bold=false }in
-    draw_iter 0 bounds state
-      (fun bounds (_,wave) ->
-        let wh, wah = get_wave_height (state.wave_height, wave) in
-        let ww, waw = get_wave_width (state.wave_width, wave) in
-        let cnt = (bounds.w + waw - 1) / waw in
-        let off = state.wave_cycle in
-        match wave with
-        | Wave.Clock ->
-          draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
-        | Wave.Binary data ->
-          let off = min (Array.length data - 1) off in
-          let cnt = max 0 (min cnt (Array.length data - off)) in
-          draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt
-        | Wave.Data data ->
-          let off = min (Array.length data - 1) off in
-          let cnt = max 0 (min cnt (Array.length data - off)) in
-          draw_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt)
+  let draw_border ?border ~ctx ~bounds label = 
+    match border with
+    | None -> bounds
+    | Some(style) ->
+      let style = get_style style in
+      G.draw_box ~ctx ~style ~bounds label;
+      let bounds = { r=bounds.r+1; c=bounds.c+1; w=max 0 (bounds.w-2); h=max 0 (bounds.h-2) } in
+      bounds
 
-  let draw_signals ~ctx ~bounds ~state = 
-    let style = get_style Gfx.Style.{ fg=Blue; bg=Black; bold=true } in
-    draw_iter 0 bounds state
-      (fun bounds (name,wave) ->
-        let _, wah = get_wave_height (state.wave_height, wave) in
-        draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 name)
-
-  let draw_values ~ctx ~bounds ~state = 
-    let style = get_style Gfx.Style.{ fg=Yellow; bg=Black; bold=false }in
-    draw_iter 0 bounds state
-      (fun bounds (_,wave) ->
-        let _, wah = get_wave_height (state.wave_height, wave) in
-        match wave with
-        | Wave.Clock -> ()
-        | Wave.Binary d | Wave.Data d ->
+  let draw_wave 
+    ?(style=Gfx.Style.default) ?border
+    ~ctx ~bounds ~state () = 
+    if bounds.w >=2 && bounds.h >= 2 then begin
+      let bounds = draw_border ?border ~ctx ~bounds "Waves" in
+      let style = get_style style in
+      draw_iter 0 bounds state
+        (fun bounds (_,wave) ->
+          let wh, wah = get_wave_height (state.wave_height, wave) in
+          let ww, waw = get_wave_width (state.wave_width, wave) in
+          let cnt = (bounds.w + waw - 1) / waw in
           let off = state.wave_cycle in
-          draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (string_of_int d.(off)))
+          match wave with
+          | Wave.Clock ->
+            draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
+          | Wave.Binary data ->
+            let off = min (Array.length data - 1) off in
+            let cnt = max 0 (min cnt (Array.length data - off)) in
+            draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt
+          | Wave.Data data ->
+            let off = min (Array.length data - 1) off in
+            let cnt = max 0 (min cnt (Array.length data - off)) in
+            draw_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt)
+    end
+
+  let draw_signals 
+    ?(style=Gfx.Style.default) ?border
+    ~ctx ~bounds ~state () = 
+    if bounds.w >=2 && bounds.h >= 2 then begin
+      let bounds = draw_border ?border ~ctx ~bounds "Signals" in
+      let style = get_style style in
+      draw_iter 0 bounds state
+        (fun bounds (name,wave) ->
+          let _, wah = get_wave_height (state.wave_height, wave) in
+          draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 name)
+    end
+
+  let draw_values 
+    ?(style=Gfx.Style.default) ?border
+    ~ctx ~bounds ~state () = 
+    if bounds.w >=2 && bounds.h >= 2 then begin
+      let bounds = draw_border ?border ~ctx ~bounds "Values" in
+      let style = get_style style in
+      draw_iter 0 bounds state
+        (fun bounds (_,wave) ->
+          let _, wah = get_wave_height (state.wave_height, wave) in
+          match wave with
+          | Wave.Clock -> ()
+          | Wave.Binary d | Wave.Data d ->
+            let off = state.wave_cycle in
+            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (string_of_int d.(off)))
+    end
 
 end
 

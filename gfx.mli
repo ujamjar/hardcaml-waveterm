@@ -1,13 +1,12 @@
 module Style : sig
-  type colour = 
-    | Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
-    | LBlack | LRed | LGreen | LYellow | LBlue | LMagenta | LCyan | LWhite
+  type colour = Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
   type t = 
     {
       bold : bool;
       fg : colour;
       bg : colour;
     }
+  val default : t
 end
 
 type rect = 
@@ -20,13 +19,14 @@ type rect =
 
 type piece = TL | BR | BL | TR | V | H | T | Tu | C
 
+val pieces : int array
+
+val int_of_piece : piece -> int
+
 module type Api = sig
 
-  type user_ctx
   type ctx
   type style 
-
-  val get_context : user_ctx -> ctx * rect
 
   val get_bounds : ctx -> rect
 
@@ -58,11 +58,8 @@ end
 
 module type Brick = sig
 
-  type user_ctx
   type ctx
   type style 
-
-  val get_context : user_ctx -> ctx * rect
 
   val get_bounds : ctx -> rect
 
@@ -72,12 +69,12 @@ module type Brick = sig
     ctx:ctx -> style:style -> bounds:rect ->
     r:int -> c:int -> char -> unit
 
-  val draw_piece : (* can probably get rid of this! need unicodes! *)
+  val draw_piece : 
     ctx:ctx -> style:style -> bounds:rect ->
     r:int -> c:int -> piece -> unit
 
 end
 
 module Build(B : Brick) : Api
-  with type user_ctx = B.user_ctx
+  with type ctx = B.ctx
 

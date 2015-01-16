@@ -1,12 +1,16 @@
 module Style = struct
-  type colour = 
-    | Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
-    | LBlack | LRed | LGreen | LYellow | LBlue | LMagenta | LCyan | LWhite
+  type colour = Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
   type t = 
     {
       bold : bool;
       fg : colour;
       bg : colour;
+    }
+  let default = 
+    {
+      bold = false;
+      fg = White;
+      bg = Black;
     }
 end
 
@@ -20,13 +24,34 @@ type rect =
 
 type piece = TL | BR | BL | TR | V | H | T | Tu | C
 
+let pieces = 
+  [|
+    0x2518;
+    0x250c;
+    0x2510;
+    0x2514;
+    0x2502;
+    0x2500;
+    0x252c;
+    0x2534;
+    0x253c;
+  |]
+
+let int_of_piece = function
+  | TL -> 0
+  | BR -> 1
+  | BL -> 2
+  | TR -> 3
+  | V  -> 4
+  | H  -> 5
+  | T  -> 6
+  | Tu -> 7
+  | C  -> 8
+
 module type Api = sig
 
-  type user_ctx
   type ctx
   type style 
-
-  val get_context : user_ctx -> ctx * rect
 
   val get_bounds : ctx -> rect
 
@@ -58,11 +83,8 @@ end
 
 module type Brick = sig
 
-  type user_ctx
   type ctx
   type style 
-
-  val get_context : user_ctx -> ctx * rect
 
   val get_bounds : ctx -> rect
 
@@ -80,19 +102,18 @@ end
 
 module Build(B : Brick) = struct
 
-  open CamomileLibrary
   include B
 
   let fill ~ctx ~style ~bounds ch = 
     for r=bounds.r to bounds.r + bounds.h - 1 do
       for c=bounds.c to bounds.c + bounds.w - 1 do
-        draw_char ~ctx ~style ~bounds ~r ~c ch (* XXX draw_uchar.. *)
+        draw_char ~ctx ~style ~bounds ~r ~c ch 
       done;
     done
 
   let clear ctx = 
     let bounds = get_bounds ctx in
-    let style = get_style Style.{ fg=White; bg=Black; bold=false } in
+    let style = get_style Style.default in
     for r=0 to bounds.h - 1 do
       for c=0 to bounds.w - 1 do
         draw_char ~ctx ~style ~bounds ~r ~c ' '

@@ -20,31 +20,23 @@ let draw_cursor ~matrix ~ctx ~bounds n =
 
 let draw_ui ui matrix state = 
   let open Gfx_lterm.Api in
-  (* lterm set up *)
+  let open Gfx.Style in
+
   let size = LTerm_ui.size ui in
   let ctx = LTerm_draw.context matrix size in
 
-  let ctx, bounds = get_context (matrix,ui) in
-  let style = get_style Gfx.Style.{ fg=White; bg=Black; bold=false }in
-  fill ~ctx ~style ~bounds ' ';
+  let bounds = get_bounds ctx in
+  let style = default in
+  fill ~ctx ~style:(get_style style) ~bounds ' ';
+
   let sbox = { r=0; c=0; w=state.signal_window_width; h=bounds.h } in
   let vbox = { r=0; c=sbox.c+sbox.w; w=state.value_window_width; h=bounds.h } in
   let wbox = { r=0; c=vbox.c+vbox.w; w=state.waveform_window_width; h=bounds.h } in
-  
-  G.draw_box ~ctx ~style ~bounds:sbox "Signals";
-  G.draw_box ~ctx ~style ~bounds:vbox "Values";
-  G.draw_box ~ctx ~style ~bounds:wbox "Waves";
 
-  let sbox = { r=sbox.r+1; c=sbox.c+1; w=max 0 (sbox.w-2); h=max 0 (sbox.h-2) } in
-  R.draw_signals ~ctx ~bounds:sbox ~state:state.wave;
-
-  let vbox = { r=vbox.r+1; c=vbox.c+1; w=max 0 (vbox.w-2); h=max 0 (vbox.h-2) } in
-  R.draw_values ~ctx ~bounds:vbox ~state:state.wave;
-
-  let wbox = { r=wbox.r+1; c=wbox.c+2; w=max 0 (wbox.w-4); h=max 0 (wbox.h-2) } in
-  R.draw_wave ~ctx ~bounds:wbox ~state:state.wave;
-
-  ()
+  let border = style in
+  R.draw_signals ~style:{style with fg=Blue} ~border ~ctx ~bounds:sbox ~state:state.wave ();
+  R.draw_values ~style:{style with fg=Yellow} ~border ~ctx ~bounds:vbox ~state:state.wave ();
+  R.draw_wave ~style:{style with fg=Green} ~border ~ctx ~bounds:wbox ~state:state.wave ()
 
 let cycles state = 
   Array.fold_left (fun m (_,w) -> 
