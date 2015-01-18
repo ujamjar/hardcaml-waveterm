@@ -15,10 +15,10 @@ waveterm: wave.cma test/data.ml test/waveterm.ml
 		-syntax camlp4o -package lwt.syntax,lambda-term -linkpkg \
 		wave.cma test/data.ml test/waveterm.ml -o waveterm
 
-wavedraw: wave.cma test/data.ml test/wavedraw.ml
+wavedraw: wave.cma test/wavedraw.ml
 	ocamlfind c -g -I src -I test \
 		-syntax camlp4o -package lwt.syntax,lambda-term -linkpkg \
-		wave.cma test/data.ml test/wavedraw.ml -o wavedraw
+		wave.cma test/wavedraw.ml -o wavedraw
 
 clean:
 	rm -f src/*.cm[ioxa] test/*.cm[ioxa] wave.cma waveterm wavedraw
