@@ -6,9 +6,13 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
   type wt = W.t
   type t = 
     {
+      (* width of a cycle *)
       mutable wave_width : int;
+      (* height of a cycle *)
       mutable wave_height : int;
+      (* starting cycle *)
       mutable wave_cycle : int;
+      (* data *)
       waves : wt Wave.t array;
     }
 
@@ -176,6 +180,19 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
             let off = state.wave_cycle in
             draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str (W.get d off)))
     end
+
+  let draw_ui
+    ?(style=Gfx.Style.default)
+    ?(sstyle=Gfx.Style.default) ?(vstyle=Gfx.Style.default) ?(wstyle=Gfx.Style.default)
+    ?border
+    ~ctx ~sbounds ~vbounds ~wbounds ~state () = 
+
+    let bounds = get_bounds ctx in
+    fill ~ctx ~style:(get_style style) ~bounds ' ';
+
+    draw_signals ~style:sstyle ?border ~ctx ~bounds:sbounds ~state:state ();
+    draw_values ~style:vstyle ?border ~ctx ~bounds:vbounds ~state:state ();
+    draw_wave ~style:wstyle ?border ~ctx ~bounds:wbounds ~state:state ()
 
 end
 

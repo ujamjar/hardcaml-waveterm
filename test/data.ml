@@ -56,20 +56,43 @@ module Make (G : Gfx.Api) = struct
   open Gfx
   open Gfx.Style
 
+  type styling = 
+    | Colour_on_black
+    | Colour_on_white
+    | Black_on_white
+    | White_on_black
+
+  let black_on_white = Gfx.Style.{default with fg=Black; bg=White }
+  let white_on_black = Gfx.Style.{default with fg=White; bg=Black }
+  let colouring s = Gfx.Style.( 
+      { s with fg=Blue }, 
+      { s with fg=Yellow }, 
+      { s with fg=Green }
+    )
+
+  let get_styling s =
+    let get s f = s, s, f s in
+    let bnw s = s, s, s in
+    match s with
+    | Colour_on_black -> get white_on_black colouring
+    | Colour_on_white -> get black_on_white colouring
+    | Black_on_white -> get black_on_white bnw
+    | White_on_black -> get white_on_black bnw
+        
   (* set up the user interface *)
   let draw ctx state = 
 
     let bounds = get_bounds ctx in
-    let style = default in
-    fill ~ctx ~style:(get_style style) ~bounds ' ';
 
-    let sbox = { r=0; c=0; w=state.signal_window_width; h=bounds.h } in
-    let vbox = { r=0; c=sbox.c+sbox.w; w=state.value_window_width; h=bounds.h } in
-    let wbox = { r=0; c=vbox.c+vbox.w; w=state.waveform_window_width; h=bounds.h } in
+    let style, border, (sstyle, vstyle, wstyle) = get_styling Colour_on_black in
 
-    let border = style in
-    R.draw_signals ~style:{style with fg=Blue} ~border ~ctx ~bounds:sbox ~state:state.wave ();
-    R.draw_values ~style:{style with fg=Yellow} ~border ~ctx ~bounds:vbox ~state:state.wave ();
-    R.draw_wave ~style:{style with fg=Green} ~border ~ctx ~bounds:wbox ~state:state.wave ()
+    let sbounds = { r=0; c=0; w=state.signal_window_width; h=bounds.h } in
+    let vbounds = { r=0; c=sbounds.c+sbounds.w; w=state.value_window_width; h=bounds.h } in
+    let wbounds = { r=0; c=vbounds.c+vbounds.w; w=state.waveform_window_width; h=bounds.h } in
+
+    R.draw_ui
+      ~style ~sstyle ~vstyle ~wstyle ~border
+      ~ctx ~sbounds ~vbounds ~wbounds ~state:state.wave ()
 
 end
+

@@ -14,16 +14,22 @@ let no_styler =
     finish = (fun _ -> ());
   }
 
+open Gfx.Style
+
+let str_of_colour = function
+  | Black -> "black" | Red -> "red" | Green -> "green" | Yellow -> "yellow"
+  | Blue -> "blue" | Magenta -> "magenta" | Cyan -> "cyan" | White -> "white"
+
+let int_of_colour = function
+  | Black -> 0 | Red -> 1 | Green -> 2 | Yellow -> 3
+  | Blue -> 4 | Magenta -> 5 | Cyan -> 6 | White -> 7
+
 let html_styler = 
-  let open Gfx.Style in
-  let get_colour = function
-    | Black -> "black" | Red -> "red" | Green -> "green" | Yellow -> "yellow"
-    | Blue -> "blue" | Magenta -> "magenta" | Cyan -> "cyan" | White -> "white"
-  in
   let prev = ref default in
   let set_style style os = 
     os (Printf.sprintf "<span style=\"background-color:%s; color:%s; font-wieght:%s\">"
-      (get_colour style.bg) (get_colour style.fg) (if style.bold then "bold" else "normal"))
+      (str_of_colour style.bg) (str_of_colour style.fg) 
+      (if style.bold then "bold" else "normal"))
   in
   let close_style os = os "</span>" in
   { 
@@ -36,16 +42,40 @@ let html_styler =
     finish = close_style;
   }
 
-let term_styler = 
-  let open Gfx.Style in
-  let get_colour = function
-    | Black -> 0 | Red -> 1 | Green -> 2 | Yellow -> 3
-    | Blue -> 4 | Magenta -> 5 | Cyan -> 6 | White -> 7
+let css_class_styler = 
+  let prev = ref default in
+  let set_style style os = 
+    os (Printf.sprintf "<span class=\"w%i%i%s\">"
+      (int_of_colour style.bg) (int_of_colour style.fg) 
+      (if style.bold then "b" else ""))
   in
+  let close_style os = os "</span>" in
+  { 
+    start = (fun os -> prev := default; set_style default os);
+    set = (fun os style -> 
+      if style <> !prev then begin 
+        prev := style; close_style os; set_style style os 
+      end); 
+    eol = (fun _ -> ());
+    finish = close_style;
+  }
+
+let css_classes = 
+  let css fg bg b = 
+    Printf.sprintf ".w%i%i%s { background-color:%s; color:%s; font-wieght:%s; }"
+      (int_of_colour bg) (int_of_colour fg) (if b then "b" else "")
+      (str_of_colour bg) (str_of_colour fg) (if b then "bold" else "normal")
+  in
+  let colours = [ Black; Red; Green; Yellow; Blue; Magenta; Cyan; White ] in
+  let mapcat f = String.concat "\n" (List.map f colours) in
+  mapcat (fun fg -> mapcat (fun bg -> css fg bg false ^ "\n" ^ css fg bg true))
+
+let term_styler = 
   let prev = ref None in
   let set_style style os = 
     os (Printf.sprintf "\027[%i;%i%sm" 
-      (get_colour style.bg + 40) (get_colour style.fg + 30) (if style.bold then ";1" else ""))
+      (int_of_colour style.bg + 40) (int_of_colour style.fg + 30) 
+      (if style.bold then ";1" else ""))
   in
   let close_style os = os "\027[0m" in
   { 
@@ -68,8 +98,9 @@ let html_escape ?(styler=no_styler) os ctx =
   styler.start os;
   for r=0 to bounds.h-1 do
     for c=0 to bounds.w-1 do (* TODO styling *)
+      let code = fst ctx.(r).(c) in
       styler.set os (snd ctx.(r).(c));
-      os ("&#" ^ string_of_int (fst ctx.(r).(c)))
+      os ("&#" ^ string_of_int code)
     done;
     styler.eol os;
     os "\n"

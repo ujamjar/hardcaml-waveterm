@@ -10,7 +10,10 @@ let main () =
   let state = get_state !cols !width !height in
   draw ctx state;
 
-  print_string "<html><head><meta charset=\"UTF-8\"></head><body><pre>\n";
+  print_string 
+    ("<html><head><meta charset=\"UTF-8\"><style>" ^ 
+    Write.css_classes ^ 
+    "</style></head><body><pre>\n");
   Write.html_escape ~styler:!styler print_string ctx;
   print_string "</pre></body>"
 
