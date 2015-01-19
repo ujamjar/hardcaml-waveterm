@@ -125,33 +125,10 @@ let draw_static () =
 let draw_scroll () = 
   let state = get_state !cols !width !height in
 
-  (* determine total width, height and no of cycles *)
-  let swidth = Array.fold_left 
-    (fun m (n, _) -> max m (String.length n)) 
-    0 state.wave.R.waves 
-  in
-
-  let cycles = 
-    Array.fold_left 
-      (fun m (_, d) -> 
-        max m 
-          (match d with
-          | Wave.Clock -> 0
-          | Wave.Data d | Wave.Binary d -> Array.length d))
-      0 state.wave.R.waves
-  in
-
-  let wwidth = 
-    let ww, waw = R.get_wave_width (!width, Wave.Clock) in
-    waw * cycles
-  in
-
-  let wheight = Array.fold_left
-    (fun a (_, d) ->
-      let _, wah = R.get_wave_height (!height, d) in
-      a + wah) 
-    0 state.wave.R.waves
-  in
+  (* get windoe sizes *)
+  let swidth = R.get_max_name_width state.wave in
+  let wwidth = R.get_max_wave_width state.wave in
+  let wheight = R.get_max_wave_height state.wave in
 
   (* render signal names and waves into different ctx's *)
   let style, border, (sstyle, vstyle, wstyle) = get_styling Colour_on_black in

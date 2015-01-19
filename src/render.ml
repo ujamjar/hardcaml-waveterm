@@ -32,6 +32,32 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
     | h,Wave.Data _ -> h-1,h+1
     | h,Wave.Binary _ -> h-1,h+1
 
+  let get_max_name_width state = 
+    Array.fold_left 
+      (fun m (n, _) -> max m (String.length n)) 
+      0 state.waves 
+
+  let get_max_cycles state = 
+    Array.fold_left 
+      (fun m (_, d) -> 
+        max m 
+          (match d with
+          | Wave.Clock -> 0
+          | Wave.Data d | Wave.Binary d -> W.length d))
+      0 state.waves
+
+  let get_max_wave_width state = 
+    let cycles = get_max_cycles state in
+    let _, waw = get_wave_width (state.wave_width, Wave.Clock) in
+    waw * cycles
+
+  let get_max_wave_height state = 
+    Array.fold_left
+      (fun a (_, d) ->
+        let _, wah = get_wave_height (state.wave_height, d) in
+        a + wah) 
+      0 state.waves
+
   let draw_clock_cycle ~ctx ~style ~bounds ~w ~h ~c = 
     draw_piece ~ctx ~style ~bounds ~r:0 ~c:c BR; 
     for i=0 to w-1 do draw_piece ~ctx ~style ~bounds ~r:0 ~c:(c+1+i) H done;

@@ -19,3 +19,22 @@ type 'a wave =
   | Data of 'a
 
 type 'a t = string * 'a wave
+
+module Foo : sig
+
+  module type W = sig
+  
+    include S
+
+    type wave = 
+      | Clock of string
+      | Binary of string * t
+      | Data of string * t * (elt -> string)
+
+  end
+
+  module Make(S : S) : W
+    with type elt = S.elt
+    and type t = S.t
+
+end

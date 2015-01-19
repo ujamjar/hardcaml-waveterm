@@ -18,6 +18,18 @@ module Make (G : Gfx.Api) (W : Wave.S) : sig
   (** get height code and actual height in chars *)
   val get_wave_height : int * wt Wave.wave -> int * int
 
+  (** max width of name window *)
+  val get_max_name_width : t -> int
+
+  (** max no of wave cycles *)
+  val get_max_cycles : t -> int
+
+  (** max width of wave window *)
+  val get_max_wave_width : t -> int
+
+  (** max height of wave window *)
+  val get_max_wave_height : t -> int
+
   (** draws one clock cycle *)
   val draw_clock_cycle : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
     w:int -> h:int -> c:int -> unit

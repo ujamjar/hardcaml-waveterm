@@ -27,3 +27,29 @@ type 'a wave =
 
 type 'a t = string * 'a wave
 
+module Foo = struct
+
+  module type W = sig
+  
+    include S
+
+    type wave = 
+      | Clock of string
+      | Binary of string * t
+      | Data of string * t * (elt -> string)
+
+  end
+
+  module Make(S : S) = struct
+
+    include S
+
+    type wave = 
+      | Clock of string
+      | Binary of string * t
+      | Data of string * t * (elt -> string)
+
+  end
+
+end
+
