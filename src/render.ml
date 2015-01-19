@@ -94,7 +94,8 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         end;
         f cur (c+w+1) (i+1)
     in
-    f (try W.get data (off-1) with _ -> W.get data off) 0 off
+    try f (try W.get data (off-1) with _ -> W.get data off) 0 off
+    with _ -> ()
 
   let draw_data ~ctx ~style ~bounds ~to_str ~w ~h ~data ~off ~cnt = 
     let draw_text r c cnt str = 
@@ -133,7 +134,8 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
           f cur w (c+w+1) (i+1)
         end
     in
-    f (try W.get data (off-1) with _ -> W.get data off) (-1) 0 off
+    try f (try W.get data (off-1) with _ -> W.get data off) (-1) 0 off
+    with _ -> ()
 
   let rec draw_iter i bounds state f = 
     if i < Array.length state.waves && bounds.h > 0 then begin

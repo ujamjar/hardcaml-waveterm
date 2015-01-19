@@ -20,8 +20,7 @@ module Int = struct
   let to_str = string_of_int
 end
 
-module Bits = struct
-  module B = HardCaml.Bits.Comb.IntbitsList
+module Bits(B : HardCaml.Comb.S) = struct
   type elt = B.t
   type t = 
     {
@@ -40,8 +39,8 @@ module Bits = struct
     d.data <- Array.init new_len (fun i -> try old_data.(i) with _ -> B.gnd)
   let rec set d n v = 
     try begin
-      d.data.(n) <- v;
-      d.length <- max d.length n
+      Array.set d.data n v;
+      d.length <- max d.length (n+1)
     end with _ -> begin
       resize d;
       set d n v

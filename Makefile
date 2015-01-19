@@ -1,26 +1,29 @@
-all: waveterm wavedraw
 
-SRC = \
-	src/gfx.mli src/gfx.ml \
-	src/gfx_lterm.mli src/gfx_lterm.ml \
-	src/write.mli src/write.ml \
-	src/wave.mli src/wave.ml \
-	src/render.mli src/render.ml \
+LIBS = _build/HardCamlWaveTerm.cma _build/HardCamlWaveLTerm.cma \
+		   _build/HardCamlWaveTerm.cmxa _build/HardCamlWaveLTerm.cmxa 
+APPS = waveterm.native wavedraw.native testsim.native
 
-wave.cma: $(SRC)
-	ocamlfind c -a -I src -g -package hardcaml,lambda-term $(SRC) -o wave.cma
+all: $(LIBS) $(APPS)
 
-waveterm: wave.cma test/waveterm.ml
-	ocamlfind c -g -I src -I test \
-		-syntax camlp4o -package hardcaml,lwt.syntax,lambda-term -linkpkg \
-		wave.cma test/waveterm.ml -o waveterm
+$(LIBS): 
+	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cma
+	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cma
+	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cmxa
+	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cmxa
 
-wavedraw: wave.cma test/wavedraw.ml
-	ocamlfind c -g -I src -I test \
-		-syntax camlp4o -package hardcaml,lwt.syntax,lambda-term -linkpkg \
-		wave.cma test/wavedraw.ml -o wavedraw
+$(APPS):
+	ocamlbuild -use-ocamlfind $(APPS)
+
+install:
+	ocamlfind install hardcaml-waveterm META \
+		_build/HardCamlWaveTerm.cmi _build/HardCamlWaveLTerm.cmi \
+		_build/HardCamlWaveTerm.a _build/HardCamlWaveLTerm.a \
+		$(LIBS)
+
+uninstall:
+	ocamlfind remove hardcaml-waveterm
 
 clean:
-	rm -f src/*.cm[ioxa] test/*.cm[ioxa] wave.cma waveterm wavedraw
+	ocamlbuild -clean
 	find . -name "*~" | xargs rm -f
 

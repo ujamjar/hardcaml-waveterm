@@ -61,8 +61,9 @@ let () = Arg.parse
   ]
   (fun _ -> ()) "wave drawings"
 
-
-module W = Wave.Make(Wave.Bits)
+module B = HardCaml.Bits.Comb.IntbitsList
+module D = Wave.Bits(B)
+module W = Wave.Make(D)
 module G = Gfx.In_memory.Api
 module R = Render.Make(G)(W)
 open Gfx
@@ -77,15 +78,13 @@ type state =
   }
 
 let rand length bits = 
-  let module B = HardCaml.Bits.Comb.IntbitsList in
-  let w = Wave.Bits.make () in
+  let w = D.make () in
   for i=0 to length-1 do
-    Wave.Bits.set w i (B.srand bits)
+    D.set w i (B.srand bits)
   done;
   w
 
 let get_state cols wave_width wave_height = 
-  let module B = HardCaml.Bits.Comb.IntbitsList in
   Gfx.{
     signal_window_width = 10;
     value_window_width = 10;

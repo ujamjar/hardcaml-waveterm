@@ -3,6 +3,9 @@ open LTerm_geom
 open LTerm_key
 open CamomileLibrary
 
+open HardCamlWaveTerm
+open HardCamlWaveLTerm
+
 (* colour scheme *)
 type styling = 
   | Colour_on_black
@@ -27,7 +30,9 @@ let get_styling s =
   | Black_on_white -> get black_on_white bnw
   | White_on_black -> get white_on_black bnw
 
-module W = Wave.Make(Wave.Bits)
+module B = HardCaml.Bits.Comb.IntbitsList
+module D = Wave.Bits(B)
+module W = Wave.Make(D)
 module G = Gfx_lterm.Api
 module R = Render.Make(G)(W)
 open Gfx
@@ -43,14 +48,13 @@ type state =
 
 let rand length bits = 
   let module B = HardCaml.Bits.Comb.IntbitsList in
-  let w = Wave.Bits.make () in
+  let w = D.make () in
   for i=0 to length-1 do
-    Wave.Bits.set w i (B.srand bits)
+    D.set w i (B.srand bits)
   done;
   w
 
 let get_state cols wave_width wave_height = 
-  let module B = HardCaml.Bits.Comb.IntbitsList in
   Gfx.{
     signal_window_width = 10;
     value_window_width = 10;

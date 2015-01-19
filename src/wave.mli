@@ -13,12 +13,12 @@ module Int : S
   with type elt = int 
    and type t = int array
 
-module Bits : sig
+module Bits(B : HardCaml.Comb.S) : sig
   include S
   val make : unit -> t
   val set : t -> int -> elt -> unit
 end
-  with type elt = HardCaml.Bits.Comb.IntbitsList.t
+  with type elt = B.t
 
 module type W = sig
 
