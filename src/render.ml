@@ -1,4 +1,4 @@
-module Make(G : Gfx.Api) (W : Wave.S) = struct
+module Make(G : Gfx.Api) (W : Wave.W) = struct
 
   open Gfx
   open G
@@ -13,47 +13,44 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
       (* starting cycle *)
       mutable wave_cycle : int;
       (* data *)
-      waves : wt Wave.t array;
+      waves : W.wave array;
     }
 
   let get_wave_width = function
-    | w,Wave.Clock -> w, (w+1)*2
-    | w,Wave.Data _ 
-    | w,Wave.Binary _ -> (w*2)+1, (w+1)*2
+    | w,W.Clock _ -> w, (w+1)*2
+    | w,W.Data _ 
+    | w,W.Binary _ -> (w*2)+1, (w+1)*2
 
   let get_wave_height = function
-    | 0,Wave.Clock -> 0,2
-    | 0,Wave.Data _ -> 0,2
-    | 0,Wave.Binary _ -> 0,2
-    | 1,Wave.Clock -> 0,2
-    | 1,Wave.Data _ -> 1,3
-    | 1,Wave.Binary _ -> 0,2
-    | h,Wave.Clock -> h-1,h+1
-    | h,Wave.Data _ -> h-1,h+1
-    | h,Wave.Binary _ -> h-1,h+1
+    | 0,W.Clock _ -> 0,2
+    | 0,W.Data _ -> 0,2
+    | 0,W.Binary _ -> 0,2
+    | 1,W.Clock _ -> 0,2
+    | 1,W.Data _ -> 1,3
+    | 1,W.Binary _ -> 0,2
+    | h,W.Clock _ -> h-1,h+1
+    | h,W.Data _ -> h-1,h+1
+    | h,W.Binary _ -> h-1,h+1
 
   let get_max_name_width state = 
     Array.fold_left 
-      (fun m (n, _) -> max m (String.length n)) 
+      (fun m s -> max m (String.length (W.get_name s))) 
       0 state.waves 
 
   let get_max_cycles state = 
     Array.fold_left 
-      (fun m (_, d) -> 
-        max m 
-          (match d with
-          | Wave.Clock -> 0
-          | Wave.Data d | Wave.Binary d -> W.length d))
+      (fun m d -> 
+        max m (try W.length (W.get_data d) with _ -> 0))
       0 state.waves
 
   let get_max_wave_width state = 
     let cycles = get_max_cycles state in
-    let _, waw = get_wave_width (state.wave_width, Wave.Clock) in
+    let _, waw = get_wave_width (state.wave_width, W.Clock "") in
     waw * cycles
 
   let get_max_wave_height state = 
     Array.fold_left
-      (fun a (_, d) ->
+      (fun a d ->
         let _, wah = get_wave_height (state.wave_height, d) in
         a + wah) 
       0 state.waves
@@ -99,7 +96,7 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
     in
     f (try W.get data (off-1) with _ -> W.get data off) 0 off
 
-  let draw_data ~ctx ~style ~bounds ~w ~h ~data ~off ~cnt = 
+  let draw_data ~ctx ~style ~bounds ~to_str ~w ~h ~data ~off ~cnt = 
     let draw_text r c cnt str = 
       let putc i ch = draw_char ~ctx ~style ~bounds ~r ~c:(c+i) ch in
       let str_len = String.length str in
@@ -115,7 +112,7 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
     let rec f prev prev_cnt c i = 
       let r = 0 in
       if i = (off+cnt) then 
-        (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (W.to_str prev))
+        (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (to_str prev))
       else
         let cur = W.get data i in
         if W.compare prev cur then begin
@@ -132,7 +129,7 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
             draw_piece ~ctx ~style ~bounds ~r ~c H;
             draw_piece ~ctx ~style ~bounds ~r:(r+h+1) ~c H;
           done;
-          (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (W.to_str prev));
+          (if h>0 then draw_text (r+1+((h-1)/2)) (c-prev_cnt) prev_cnt (to_str prev));
           f cur w (c+w+1) (i+1)
         end
     in
@@ -140,7 +137,7 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
 
   let rec draw_iter i bounds state f = 
     if i < Array.length state.waves && bounds.h > 0 then begin
-      let _, wah = get_wave_height (state.wave_height, snd state.waves.(i)) in
+      let _, wah = get_wave_height (state.wave_height, state.waves.(i)) in
       f bounds state.waves.(i);
       draw_iter (i+1) { bounds with r = bounds.r + wah; h = bounds.h - wah } state f
     end
@@ -161,22 +158,22 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Waves" in
       let style = get_style style in
       draw_iter 0 bounds state
-        (fun bounds (_,wave) ->
+        (fun bounds wave ->
           let wh, wah = get_wave_height (state.wave_height, wave) in
           let ww, waw = get_wave_width (state.wave_width, wave) in
           let cnt = (bounds.w + waw - 1) / waw in
           let off = state.wave_cycle in
           match wave with
-          | Wave.Clock ->
+          | W.Clock(_) ->
             draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
-          | Wave.Binary data ->
+          | W.Binary(_, data) ->
             let off = min (W.length data - 1) off in
             let cnt = max 0 (min cnt (W.length data - off)) in
             draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt
-          | Wave.Data data ->
+          | W.Data(_, data, to_str) ->
             let off = min (W.length data - 1) off in
             let cnt = max 0 (min cnt (W.length data - off)) in
-            draw_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off ~cnt)
+            draw_data ~ctx ~style ~bounds ~to_str ~w:ww ~h:wh ~data ~off ~cnt)
     end
 
   let draw_signals 
@@ -186,9 +183,9 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Signals" in
       let style = get_style style in
       draw_iter 0 bounds state
-        (fun bounds (name,wave) ->
+        (fun bounds wave ->
           let _, wah = get_wave_height (state.wave_height, wave) in
-          draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 name)
+          draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.get_name wave))
     end
 
   let draw_values 
@@ -198,13 +195,16 @@ module Make(G : Gfx.Api) (W : Wave.S) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Values" in
       let style = get_style style in
       draw_iter 0 bounds state
-        (fun bounds (_,wave) ->
+        (fun bounds wave ->
           let _, wah = get_wave_height (state.wave_height, wave) in
           match wave with
-          | Wave.Clock -> ()
-          | Wave.Binary d | Wave.Data d ->
+          | W.Clock _ -> ()
+          | W.Binary(_, d) ->
             let off = state.wave_cycle in
-            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str (W.get d off)))
+            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str (W.get d off))
+          | W.Data(_, d, to_str) ->
+            let off = state.wave_cycle in
+            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (to_str (W.get d off)))
     end
 
   let draw_ui

@@ -1,7 +1,5 @@
 (** Functions for drawing waves, signal names and values *)
-module Make (G : Gfx.Api) (W : Wave.S) : sig
-
-  type wt = W.t
+module Make (G : Gfx.Api) (W : Wave.W) : sig
 
   (** wave configuration and data *)
   type t = 
@@ -9,14 +7,14 @@ module Make (G : Gfx.Api) (W : Wave.S) : sig
       mutable wave_width : int; (** width of wave cycle *)
       mutable wave_height : int; (** height of wave cycle *)
       mutable wave_cycle : int; (** start cycle *)
-      waves : wt Wave.t array; (** data *)
+      waves : W.wave array; (** data *)
     }
 
   (** get width code and actual width in chars *)
-  val get_wave_width : int * wt Wave.wave -> int * int
+  val get_wave_width : int * W.wave -> int * int
 
   (** get height code and actual height in chars *)
-  val get_wave_height : int * wt Wave.wave -> int * int
+  val get_wave_height : int * W.wave -> int * int
 
   (** max width of name window *)
   val get_max_name_width : t -> int
@@ -43,7 +41,7 @@ module Make (G : Gfx.Api) (W : Wave.S) : sig
     w:int -> h:int -> data:W.t -> off:int -> cnt:int -> unit
 
   (** draw arbitrary waveform data *)
-  val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
+  val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> to_str:(W.elt -> string) -> 
     w:int -> h:int -> data:W.t -> off:int -> cnt:int -> unit
 
   (** draw waveforms *)
@@ -70,5 +68,4 @@ module Make (G : Gfx.Api) (W : Wave.S) : sig
     state:t -> unit -> unit
 
 end
-  with type wt = W.t
 

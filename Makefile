@@ -8,16 +8,16 @@ SRC = \
 	src/render.mli src/render.ml \
 
 wave.cma: $(SRC)
-	ocamlfind c -a -I src -g -package lambda-term $(SRC) -o wave.cma
+	ocamlfind c -a -I src -g -package hardcaml,lambda-term $(SRC) -o wave.cma
 
-waveterm: wave.cma test/data.ml test/waveterm.ml
+waveterm: wave.cma test/waveterm.ml
 	ocamlfind c -g -I src -I test \
-		-syntax camlp4o -package lwt.syntax,lambda-term -linkpkg \
-		wave.cma test/data.ml test/waveterm.ml -o waveterm
+		-syntax camlp4o -package hardcaml,lwt.syntax,lambda-term -linkpkg \
+		wave.cma test/waveterm.ml -o waveterm
 
 wavedraw: wave.cma test/wavedraw.ml
 	ocamlfind c -g -I src -I test \
-		-syntax camlp4o -package lwt.syntax,lambda-term -linkpkg \
+		-syntax camlp4o -package hardcaml,lwt.syntax,lambda-term -linkpkg \
 		wave.cma test/wavedraw.ml -o wavedraw
 
 clean:

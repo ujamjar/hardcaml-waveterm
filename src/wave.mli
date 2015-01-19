@@ -13,28 +13,29 @@ module Int : S
   with type elt = int 
    and type t = int array
 
-type 'a wave = 
-  | Clock 
-  | Binary of 'a
-  | Data of 'a
+module Bits : sig
+  include S
+  val make : unit -> t
+  val set : t -> int -> elt -> unit
+end
+  with type elt = HardCaml.Bits.Comb.IntbitsList.t
 
-type 'a t = string * 'a wave
+module type W = sig
 
-module Foo : sig
+  include S
 
-  module type W = sig
-  
-    include S
+  type wave = 
+    | Clock of string
+    | Binary of string * t
+    | Data of string * t * (elt -> string)
 
-    type wave = 
-      | Clock of string
-      | Binary of string * t
-      | Data of string * t * (elt -> string)
-
-  end
-
-  module Make(S : S) : W
-    with type elt = S.elt
-    and type t = S.t
+  val get_name : wave -> string
+  val get_data : wave -> t
+  val get_to_str : wave -> (elt -> string)
 
 end
+
+module Make(S : S) : W
+  with type elt = S.elt
+  and type t = S.t
+

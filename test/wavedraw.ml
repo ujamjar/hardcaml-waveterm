@@ -62,8 +62,9 @@ let () = Arg.parse
   (fun _ -> ()) "wave drawings"
 
 
+module W = Wave.Make(Wave.Bits)
 module G = Gfx.In_memory.Api
-module R = Render.Make(G)(Wave.Int)
+module R = Render.Make(G)(W)
 open Gfx
 open G
 
@@ -75,7 +76,16 @@ type state =
     wave : R.t;
   }
 
+let rand length bits = 
+  let module B = HardCaml.Bits.Comb.IntbitsList in
+  let w = Wave.Bits.make () in
+  for i=0 to length-1 do
+    Wave.Bits.set w i (B.srand bits)
+  done;
+  w
+
 let get_state cols wave_width wave_height = 
+  let module B = HardCaml.Bits.Comb.IntbitsList in
   Gfx.{
     signal_window_width = 10;
     value_window_width = 10;
@@ -86,18 +96,11 @@ let get_state cols wave_width wave_height =
         wave_height;
         wave_cycle = 0;
         waves  = [|
-          "clock", Wave.Clock;
-          "a", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-          "b", Wave.Data(Array.init 50 (fun _ -> Random.int 1000-500));
-          "c", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-          "gamma-omega", Wave.Data(Array.init 50 (fun _ -> Random.int 10));
-          "beta", Wave.Data(Array.init 50 (fun _ -> Random.int 3));
-          "delta", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-          "eye", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
-          "enable", Wave.Data(Array.init 50 (fun _ -> Random.int 10-5));
-          "clock2", Wave.Clock;
-          "bubble", Wave.Data(Array.init 50 (fun _ -> Random.int 20-10));
-          "fairy", Wave.Binary(Array.init 50 (fun _ -> Random.int 2));
+          W.Clock "clock";
+          W.Binary("a", rand 50 1);
+          W.Data("b", rand 50 10, B.to_bstr);
+          W.Data("c", rand 50 4, (fun s -> Printf.sprintf "%1x" (B.to_int s)));
+          W.Data("data_out_port", rand 50 6, (fun s -> Printf.sprintf "%i" (B.to_sint s)));
         |];
       }
   }
