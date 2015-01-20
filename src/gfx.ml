@@ -22,31 +22,35 @@ type rect =
     h : int;
   }
 
-type piece = TL | BR | BL | TR | V | H | T | Tu | C
+type piece = 
+  (* lines *)
+  TL | BR | BL | TR | V | H | T | Tu | C |
+  (* full/half blocks *)
+  F | TH | BH | LH | RH | 
+  (* quarter blocks *)
+  QTL | QBR | QBL | QTR
 
-let pieces = 
-  [|
-    0x2518;
-    0x250c;
-    0x2510;
-    0x2514;
-    0x2502;
-    0x2500;
-    0x252c;
-    0x2534;
-    0x253c;
-  |]
+let bars = false (* kinda interesting *)
 
-let int_of_piece = function
-  | TL -> 0
-  | BR -> 1
-  | BL -> 2
-  | TR -> 3
-  | V  -> 4
-  | H  -> 5
-  | T  -> 6
-  | Tu -> 7
-  | C  -> 8
+let unicode_of_piece = function
+  | TL  -> 0x2518
+  | BR  -> 0x250c
+  | BL  -> 0x2510
+  | TR  -> 0x2514
+  | V   -> 0x2502
+  | H   -> 0x2500
+  | T   -> 0x252c
+  | Tu  -> 0x2534
+  | C   -> 0x253c
+  | F   -> if bars then 0x2551 else 0x2588
+  | TH  -> if bars then 0x2568 else 0x2580
+  | BH  -> if bars then 0x2565 else 0x2584
+  | LH  -> 0x258c
+  | RH  -> 0x2590
+  | QTL -> 0x2598
+  | QBR -> 0x2597
+  | QBL -> 0x2596
+  | QTR -> 0x259d
 
 module type Api = sig
 
@@ -163,7 +167,7 @@ module In_memory = struct
 
     let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
       if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
-        ctx.(bounds.r + r).(bounds.c + c) <- pieces.(int_of_piece piece), style
+        ctx.(bounds.r + r).(bounds.c + c) <- unicode_of_piece piece, style
       end
 
   end

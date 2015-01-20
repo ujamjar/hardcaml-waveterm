@@ -20,7 +20,7 @@ let f i =
 module G = Interface.Gen(I)(O)
 
 let circ,sim,i,o = G.make "test" f
-let sim, render = Wave.wrap sim
+let sim, waves = Wave.wrap sim
 let () =
   HardCaml.Cyclesim.Api.reset sim;
   for l=0 to 7 do
@@ -30,5 +30,8 @@ let () =
       HardCaml.Cyclesim.Api.cycle sim;
     done;
   done;
-  render()
+  HardCamlWaveTerm.Write.(utf8 ~styler:term_styler print_string 
+    (Wave.R.(draw 
+      ~style:HardCamlWaveTerm.Render.Styles.colour_on_black ~cols:200
+      { waves with R.wave_height=1; wave_cycle=63 })))
 

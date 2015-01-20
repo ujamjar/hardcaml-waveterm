@@ -69,11 +69,11 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
 
   (** draw binary waveform data *)
   val draw_binary_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
-    w:int -> h:int -> data:W.t -> off:int -> cnt:int -> unit
+    w:int -> h:int -> data:W.t -> off:int -> unit
 
   (** draw arbitrary waveform data *)
   val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> to_str:(W.elt -> string) -> 
-    w:int -> h:int -> data:W.t -> off:int -> cnt:int -> unit
+    w:int -> h:int -> data:W.t -> off:int -> unit
 
   (** draw waveforms *)
   val draw_wave : 

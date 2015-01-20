@@ -7,8 +7,7 @@ module Make(B : Comb.S) = struct
 
   module D = Wave.Bits(B)
   module W = Wave.Make(D)
-  module G = Gfx.In_memory.Api
-  module R = Render.Make(G)(W)
+  module R = Render.Static(W)
 
   let wrap sim = 
     
@@ -39,26 +38,22 @@ module Make(B : Comb.S) = struct
     let waves = Array.of_list (List.map fst ports) in
     let updates = Array.of_list (List.map snd ports) in
 
-    let render () = 
-      let open Gfx in
-      let ctx = Gfx.In_memory.init ~rows:30 ~cols:79 in
+    let waves = R.R.({
+      wave_width = 3;
+      wave_height = 1;
+      wave_cycle = 0;
+      waves = waves;
+    }) in
 
-      let waves = R.({
-        wave_width = 3;
-        wave_height = 1;
-        wave_cycle = 0;
-        waves = waves;
-      }) in
-
-      let style = Render.Styles.white_on_black in
-      R.draw_ui ~style ~ctx waves;
-
-      Write.utf8 ~styler:Write.no_styler print_string ctx
-    in
+    let tasks sim rst = List.concat [
+      sim;
+      [ fun () -> Array.iter (fun f -> f rst) updates; incr cycle ];
+    ] in
 
     { sim with
-      sim_reset = (fun () -> sim.sim_reset (); Array.iter (fun f -> f true) updates; incr cycle);
-      sim_cycle = (fun () -> sim.sim_cycle (); Array.iter (fun f -> f false) updates; incr cycle);
-    }, render
+      sim_reset = tasks sim.sim_reset true;
+      sim_cycle = tasks sim.sim_cycle false;
+    }, waves
 
 end
+

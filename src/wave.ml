@@ -31,7 +31,11 @@ module Bits(B : HardCaml.Comb.S) = struct
   let one = B.vdd
   let compare a b = a = b
   let length d = d.length
-  let get d n = Array.get d.data n
+  let get d n = 
+    if n < d.length then
+      Array.get d.data n
+    else
+      raise (Invalid_argument "wave out of bounds")
   let make () = { data = [||]; length = 0; }
   let resize d = 
     let old_data = d.data in

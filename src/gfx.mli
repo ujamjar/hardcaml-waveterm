@@ -22,14 +22,16 @@ type rect =
     h : int; (** height *)
   }
 
-(** corners, vert/horz bar, T shapes, cross *)
-type piece = TL | BR | BL | TR | V | H | T | Tu | C
+type piece = 
+  (** corners, vert/horz bar, T shapes, cross *)
+  TL | BR | BL | TR | V | H | T | Tu | C |
+  (* full/half blocks *)
+  F | TH | BH | LH | RH | 
+  (* quarter blocks *)
+  QTL | QBR | QBL | QTR
 
-(** unicode values of pieces *)
-val pieces : int array
-
-(** index into pieces array *)
-val int_of_piece : piece -> int
+(** unicode value of piece *)
+val unicode_of_piece : piece -> int
 
 (** Main graphics drawing API.
     

@@ -28,7 +28,7 @@ module Brick = struct
   let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
     if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
       LTerm_draw.draw_char ctx ~style (bounds.r + r) (bounds.c + c) 
-        (UChar.of_int pieces.(int_of_piece piece))
+        (UChar.of_int (unicode_of_piece piece))
     end
 
   let draw_char ~ctx ~style ~bounds ~r ~c ch =
