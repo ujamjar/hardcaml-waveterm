@@ -29,14 +29,16 @@ $ wavedraw -html static > test/wave-static.html
 
 ## General
 
-* [ ] connect to HardCaml Bits type 
-* [ ] simplify wave type functor
-* [ ] configure data display
-* [ ] split library for javascript mode (lambda-term deps in seperate package)
+* [x] connect to HardCaml Bits type 
+* [x] simplify wave type functor
+* [x] configure data display
+* [x] split library for javascript mode (lambda-term deps in seperate package)
+* [ ] sub cycle display (scaling factor < 1)
 
 ## Interactive app
 
-* [ ] connect to testbench, read data as flow
+* [ ] connect to testbench
+* [ ] read data as stram
 * [ ] scroll names/values windows
 * [ ] resize sub-windows
 * [ ] interactive testbench driver mode (edit signal values, send back to simulation)
@@ -46,3 +48,4 @@ $ wavedraw -html static > test/wave-static.html
 * [ ] set start cycle (horizontal)
 * [ ] set start wave (vertical)
 * [ ] load data from file
+

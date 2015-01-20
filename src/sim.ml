@@ -41,15 +41,7 @@ module Make(B : Comb.S) = struct
 
     let render () = 
       let open Gfx in
-      let rows, cols = 30, 79 in
-      let swidth, vwidth = 10, 10 in
-      let wwidth = cols - swidth - vwidth in
       let ctx = Gfx.In_memory.init ~rows:30 ~cols:79 in
-
-      let bounds = Gfx.In_memory.Api.get_bounds ctx in
-      let sbounds = { r=0; c=0; w=swidth; h=bounds.h } in
-      let vbounds = { r=0; c=sbounds.c+sbounds.w; w=vwidth; h=bounds.h } in
-      let wbounds = { r=0; c=vbounds.c+vbounds.w; w=wwidth; h=bounds.h } in
 
       let waves = R.({
         wave_width = 3;
@@ -58,10 +50,8 @@ module Make(B : Comb.S) = struct
         waves = waves;
       }) in
 
-      let style,sstyle,vstyle,wstyle,border = Style.(default, default, default, default, default) in
-      R.draw_ui
-        ~style ~sstyle ~vstyle ~wstyle ~border
-        ~ctx ~sbounds ~vbounds ~wbounds ~state:waves ();
+      let style = Render.Styles.white_on_black in
+      R.draw_ui ~style ~ctx waves;
 
       Write.utf8 ~styler:Write.no_styler print_string ctx
     in

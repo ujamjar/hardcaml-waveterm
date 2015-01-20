@@ -3,15 +3,17 @@ LIBS = _build/HardCamlWaveTerm.cma _build/HardCamlWaveLTerm.cma \
 		   _build/HardCamlWaveTerm.cmxa _build/HardCamlWaveLTerm.cmxa 
 APPS = waveterm.native wavedraw.native testsim.native
 
-all: $(LIBS) $(APPS)
+.PHONY: all libs apps
 
-$(LIBS): 
+all: libs apps
+
+libs: 
 	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cma
 	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cma
 	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cmxa
 	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cmxa
 
-$(APPS):
+apps:
 	ocamlbuild -use-ocamlfind $(APPS)
 
 install:
