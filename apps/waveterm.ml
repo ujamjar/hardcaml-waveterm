@@ -1,3 +1,20 @@
+let help = 
+"Wave viewer
+===========
+
+View HardCaml digital waveform file.
+
+$ " ^ Sys.argv.(0) ^ " [options] file
+
+Controls
+--------
+
+q/esc             Quit
++/-               Scale wave width
+<shift> +/-       Scale wave height
+<arrows>          Scroll
+<shift> <arrows>  Scroll x 10
+"
 open Lwt
 open LTerm_geom
 open LTerm_key
@@ -14,14 +31,15 @@ let files = ref []
 
 let () = Arg.parse
   [
-    "-scheme", Arg.Symbol(["white"; "black"; "colour"],
+    "-style", Arg.Symbol(["white"; "black"; "light"; "dark"],
       (function
         | "white" -> scheme := Render.Styles.black_on_white
         | "black" -> scheme := Render.Styles.white_on_black
-        | "colour" -> scheme := Render.Styles.colour_on_white
+        | "light" -> scheme := Render.Styles.colour_on_white
+        | "dark" -> scheme := Render.Styles.colour_on_black
         | _ -> ())), " select colour scheme";
   ]
-  (fun s -> files := s :: !files) "wave viewer"
+  (fun s -> files := s :: !files) help
   
 let get_waves name = 
   let f = open_in name in
@@ -31,7 +49,7 @@ let get_waves name =
 
 let run file =
   let waves = get_waves file in
-  Ui.run waves
+  Ui.run ~style:!scheme waves
   
 lwt () = 
   match !files with

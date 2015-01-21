@@ -1,6 +1,37 @@
 (* HTML or UFT-8 file generation with various options *)
 open HardCamlWaveTerm
 
+let help = 
+"Wave draw
+=========
+
+Render HardCaml digital waveform files into UTF-8 text or
+HTML Files.
+
+$ " ^ Sys.argv.(0) ^ " {[options] [-o file-out] file-in}*
+
+By default output is written as UTF-8 without any styling.  
+This is suitable for loading into editors.   Enable 
+styling with '-styler term' (view with 'less -r file').
+
+Static or scrollable HTML output can be selected with 
+the '-html' option.  Styling is enabled with the 'css' 
+or 'class' styler options.
+
+Mutliple outputs can be generated.  This happens
+whenever a file-in argument is read.  Therefore,
+the output file, if any, must be specified before
+the corresponding input file.
+
+The output file and mode are reset to stdout and UTF-8
+between each invocation. ie
+
+$ " ^ Sys.argv.(0) ^ " a.wave -html static -o b.html b.wave c.wave
+
+will (1) display a.wave on stdout (2) write b.html from b.wave 
+(3) display c.wave on stdout.
+"
+
 type mode = Utf8 | Html | Html_scroll
 
 type styler = No_style | Css | Css_class | Term
@@ -11,34 +42,9 @@ let width, height, start = ref 3, ref 1, ref 0
 let styler = ref No_style
 let scheme = ref Render.Styles.colour_on_black
 let mode = ref Utf8
-let files = ref []
+let out_file = ref ""
 
-let () = Arg.parse
-  [
-    "-rows", Arg.Set_int rows, "number of rows";
-    "-cols", Arg.Set_int cols, "number of cols";
-    "-width", Arg.Set_int width, "wave cycle width";
-    "-height", Arg.Set_int height, "wave cycle height";
-    "-start", Arg.Set_int start, "wave start cycle";
-    "-style", Arg.Symbol(["term"; "css"; "class"],
-      (function
-        | "term" -> styler := Term 
-        | "css" -> styler := Css
-        | "class" -> styler := Css_class
-        | _ -> ())), " select style generator";
-    "-scheme", Arg.Symbol(["white"; "black"; "colour"],
-      (function
-        | "white" -> scheme := Render.Styles.black_on_white
-        | "black" -> scheme := Render.Styles.white_on_black
-        | "colour" -> scheme := Render.Styles.colour_on_white
-        | _ -> ())), " select colour scheme";
-    "-html", Arg.Symbol(["static"; "scroll"], 
-      (function
-        | "static" -> mode := Html
-        | "scroll" -> mode := Html_scroll
-        | _ -> ())), " HTML generation";
-  ]
-  (fun s -> files := s :: !files) "wave drawings"
+let reset_state () = mode := Utf8; out_file := ""
 
 module B = HardCaml.Bits.Comb.IntbitsList
 module W = Wave.Make(Wave.Bits(B))
@@ -64,7 +70,15 @@ let get_waves name =
   close_in f;
   w
 
-let gen name = 
+let gen name = begin
+  (* set up output file *)
+  let os, close = 
+    if !out_file = "" then 
+      print_string, (fun () -> ())
+    else 
+      let f = open_out !out_file in
+      output_string f, (fun () -> close_out f)
+  in
   let waves = W.({ (get_waves name) with
     wave_width = !width;
     wave_height = !height;
@@ -81,50 +95,85 @@ let gen name =
   let html_header () = 
     if !styler = Css_class then begin
       (* write embedded css classes *)
-      print_string 
+      os 
         ("<html><head><meta charset=\"UTF-8\"><style>" ^ 
         Write.css_classes ^ 
         "</style></head>\n")
     end else begin
-      print_string "<html><head><meta charset=\"UTF-8\"></head>\n";
+      os "<html><head><meta charset=\"UTF-8\"></head>\n";
     end;
   in
 
-  match !mode with
-  | Utf8 -> begin
-    (* write utf-8 *)
-    let ctx = draw_static waves in
-    Write.utf8 ~styler:style_fn print_string ctx
-  end
-  | Html -> begin
-    (* write html file *)
-    let ctx = draw_static waves in
-    html_header ();
-    print_string "<body><pre>\n";
-    Write.html_escape ~styler:style_fn print_string ctx;
-    print_string "</pre></body>"
-  end
-  | Html_scroll -> begin
-    (* write html file with signals and waves as floating divs with scroll bars.
-     * bit of a hack for the width %'s.  Not really sure how its supposed to
-     * work, but it seems to be OK. *)
-    let sctx, wctx = draw_scroll waves in
-    let div_style = 
-      "display:inline-block; overflow-x:auto; float:left" 
-    in
+  begin
+    match !mode with
+    | Utf8 -> begin
+      (* write utf-8 *)
+      let ctx = draw_static waves in
+      Write.utf8 ~styler:style_fn os ctx
+    end
+    | Html -> begin
+      (* write html file *)
+      let ctx = draw_static waves in
+      html_header ();
+      os "<body><pre>\n";
+      Write.html_escape ~styler:style_fn os ctx;
+      os "</pre></body>"
+    end
+    | Html_scroll -> begin
+      (* write html file with signals and waves as floating divs with scroll bars.
+      * bit of a hack for the width %'s.  Not really sure how its supposed to
+      * work, but it seems to be OK. *)
+      let sctx, wctx = draw_scroll waves in
+      let div_style = 
+        "display:inline-block; overflow-x:auto; float:left" 
+      in
 
-    html_header ();
-    print_string "<body>\n";
-    print_string "<div style=\"margin-left:5%; width:100%\">";
-    print_string ("<div style=\"max-width:20%; " ^ div_style ^ "\"><pre>");
-    Write.html_escape ~styler:style_fn print_string sctx;
-    print_string "</pre></div>\n";
-    print_string ("<div style=\"max-width:80%; " ^ div_style ^ "\"><pre>");
-    Write.html_escape ~styler:style_fn print_string wctx;
-    print_string "</pre></div>\n";
-    print_string "<div style=\"clear:both\"></div>";
-    print_string "</body>"
-  end
+      html_header ();
+      os "<body>\n";
+      os "<div style=\"margin-left:5%; width:100%\">";
+      os ("<div style=\"max-width:20%; " ^ div_style ^ "\"><pre>");
+      Write.html_escape ~styler:style_fn os sctx;
+      os "</pre></div>\n";
+      os ("<div style=\"max-width:80%; " ^ div_style ^ "\"><pre>");
+      Write.html_escape ~styler:style_fn os wctx;
+      os "</pre></div>\n";
+      os "<div style=\"clear:both\"></div>";
+      os "</body>";
+    end
+  end;
+  (* reset out file and mode, carry over various styling infos *)
+  close (); reset_state ()
+end
 
-let () = List.iter gen (List.rev !files)
+let () = 
+  if Array.length Sys.argv = 1 then print_string help 
+  else Arg.parse
+  [
+    "-rows", Arg.Set_int rows, "number of rows";
+    "-cols", Arg.Set_int cols, "number of cols";
+    "-width", Arg.Set_int width, "wave cycle width";
+    "-height", Arg.Set_int height, "wave cycle height";
+    "-start", Arg.Set_int start, "wave start cycle";
+    "-styler", Arg.Symbol(["none"; "term"; "css"; "class"],
+      (function
+        | "term" -> styler := Term 
+        | "css" -> styler := Css
+        | "class" -> styler := Css_class
+        | "none" -> styler := No_style
+        | _ -> ())), " select style generator";
+    "-style", Arg.Symbol(["white"; "black"; "light"; "dark"],
+      (function
+        | "white" -> scheme := Render.Styles.black_on_white
+        | "black" -> scheme := Render.Styles.white_on_black
+        | "light" -> scheme := Render.Styles.colour_on_white
+        | "dark" -> scheme := Render.Styles.colour_on_black
+        | _ -> ())), " select colour scheme";
+    "-html", Arg.Symbol(["static"; "scroll"], 
+      (function
+        | "static" -> mode := Html
+        | "scroll" -> mode := Html_scroll
+        | _ -> ())), " HTML generation";
+    "-o", Arg.Set_string out_file, "output file (default stdout)";
+  ]
+  gen help
 

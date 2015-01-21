@@ -76,9 +76,9 @@ module Make
       | ev ->
         loop ?timeout ui waves
 
-  let draw ctx waves = 
+  let sdef = Render.Styles.colour_on_black
 
-    let style = Render.Styles.colour_on_black in
+  let draw ?(style=sdef) ctx waves = 
 
     (* get bounds explictly - we may want to change them through the ui *)
     let bounds = G.get_bounds ctx in
@@ -86,23 +86,23 @@ module Make
 
     R.draw_ui ~style ~ctx ~bounds waves 
 
-  let init waves = 
+  let init ?(style=sdef) waves = 
     Lazy.force LTerm.stdout >>= fun term ->
     LTerm_ui.create term 
       (fun ui matrix -> 
         let size = LTerm_ui.size ui in
         let ctx = LTerm_draw.context matrix size in
-        draw ctx waves) 
+        draw ~style ctx waves) 
 
-  let run ?timeout waves = 
-    init waves >>= fun ui ->
+  let run ?(style=sdef) ?timeout waves = 
+    init ~style waves >>= fun ui ->
     (try_lwt
       loop ?timeout ui waves
     finally
       LTerm_ui.quit ui)
 
-  let run_testbench ?timeout waves tb = 
-    let ui = run ?timeout waves in
+  let run_testbench ?(style=sdef) ?timeout waves tb = 
+    let ui = run ~style ?timeout waves in
     try_lwt
       lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
       Lwt.return (Some tb)

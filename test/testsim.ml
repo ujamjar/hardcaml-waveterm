@@ -1,3 +1,15 @@
+(* Demonstrate a standard HardCaml testbench with a generated waveform
+   written to the terminal.
+
+   We use 'HardCamlWaveTerm.Sim.Make(B).wrap' to hook into the simulation 
+   and generate the waveform data and the standard Write.uft8 function to 
+   print it.
+
+   This flow might be useful in, for example, utop or iocaml notebooks.  
+   Note that you can render multiple times and at any point during the 
+   simulation to capture interesting data.
+*)
+
 open HardCaml.Api
 open Comb
 

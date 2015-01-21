@@ -1,3 +1,16 @@
+(* This shows a LWT-ified HardCaml testbench which is run in parallel with 
+   the interactive waveform viewer.
+
+   'HardCamlWaveTerm.Sim.Make(B).wrap' hooks us into the simulation and 
+   records the waveform data.
+
+   The standard HardCaml Cs.reset and Cs.cycle calls are simply wrapped with
+   Lwt.wrap1, then the testbench written in an (imperative) Lwt style.
+
+   Lastly we use the HardCamlWaveLTerm.Ui.run_testbench function with our
+   testbench thread.  In the code cycles are slowed down with a sleep call 
+   so we can watch them get dynamically generated in the viewer! *)
+
 open HardCaml.Api
 open Comb
 
@@ -43,7 +56,7 @@ let testbench () =
   done
 
 lwt () = 
-  match_lwt Ui.run_testbench ~timeout:0.5 {waves with W.wave_width=(-1)}(testbench()) with
+  match_lwt Ui.run_testbench ~timeout:0.5 {waves with W.wave_width=(-1)} (testbench()) with
   | None -> Lwt_io.printf "Canceled!\n"
   | Some(x) -> Lwt_io.printf "OK!\n"
 
