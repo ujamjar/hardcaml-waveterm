@@ -29,15 +29,6 @@ end
 (** Functions for drawing waves, signal names and values *)
 module Make (G : Gfx.Api) (W : Wave.W) : sig
 
-  (** wave configuration and data *)
-  type t = 
-    {
-      mutable wave_width : int; (** width of wave cycle *)
-      mutable wave_height : int; (** height of wave cycle *)
-      mutable wave_cycle : int; (** start cycle *)
-      waves : W.wave array; (** data *)
-    }
-
   (** get width code and actual width in chars *)
   val get_wave_width : int * W.wave -> int * int
 
@@ -45,19 +36,19 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val get_wave_height : int * W.wave -> int * int
 
   (** max width of name window *)
-  val get_max_signal_width : t -> int
+  val get_max_signal_width : W.waves -> int
 
   (** max width of values window *)
-  val get_max_value_width : t -> int
+  val get_max_value_width : W.waves -> int
 
   (** max no of wave cycles *)
-  val get_max_cycles : t -> int
+  val get_max_cycles : W.waves -> int
 
   (** max width of wave window *)
-  val get_max_wave_width : t -> int
+  val get_max_wave_width : W.waves -> int
 
   (** max height of wave window *)
-  val get_max_wave_height : t -> int
+  val get_max_wave_height : W.waves -> int
 
   (** draws one clock cycle *)
   val draw_clock_cycle : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
@@ -78,22 +69,22 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   (** draw waveforms *)
   val draw_wave : 
     ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> t -> unit
+    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
   
   (** draw signal names *)
   val draw_signals : 
     ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> t -> unit
+    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
 
   (** draw signal values *)
   val draw_values : 
     ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> t -> unit
+    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
 
   (** draw standard user inferface (names, values, waveforms left to right *)
   val draw_ui :
     ?style:Styles.t -> ?bounds:Bounds.t -> 
-    ctx:G.ctx -> t -> unit 
+    ctx:G.ctx -> W.waves -> unit 
 
 end
 
@@ -103,11 +94,11 @@ module Static(W : Wave.W) : sig
 
   val draw : 
     ?signals:bool -> ?values:bool -> ?waves:bool -> ?style:Styles.t ->
-    ?rows:int -> ?cols:int -> R.t -> 
+    ?rows:int -> ?cols:int -> W.waves -> 
     Gfx.In_memory.Api.ctx
 
   val draw_full : 
-    ?style:Styles.t -> R.t -> 
+    ?style:Styles.t -> W.waves -> 
     Gfx.In_memory.Api.ctx * 
     Gfx.In_memory.Api.ctx * 
     Gfx.In_memory.Api.ctx

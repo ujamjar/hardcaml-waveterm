@@ -1,12 +1,14 @@
 <{src,test}/*.{ml,mli}>: package(hardcaml)
 <src/{gfx,wave,render,write,sim}.cmx>: for-pack(HardCamlWaveTerm)
+
 <src/{gfx_lterm,ui}.{ml,mli}>: syntax(camlp4o), package(lambda-term,lwt,lwt.syntax)
 <src/{gfx_lterm,ui}.cmx>: for-pack(HardCamlWaveLTerm)
+
 <test/waveterm.ml>: syntax(camlp4o), package(lwt.syntax,lambda-term)
-<test/testsim.ml>: syntax(camlp4o), package(hardcaml.syntax,hardcaml)
+<test/{testsim,testsim_lwt}.ml>: syntax(camlp4o), package(hardcaml.syntax,hardcaml,lwt,lwt.syntax)
 
 <test/*.{byte,native}>: package(hardcaml)
-<test/waveterm.{byte,native}>: package(lambda-term)
+<test/{testsim_lwt,testsim,waveterm}.{byte,native}>: package(lambda-term)
 
 <src>: include
 <test>: include

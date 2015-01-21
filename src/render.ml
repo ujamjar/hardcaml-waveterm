@@ -64,46 +64,36 @@ end
 module Make(G : Gfx.Api) (W : Wave.W) = struct
 
   open G
-
-  type t = 
-    {
-      (* width of a cycle *)
-      mutable wave_width : int;
-      (* height of a cycle *)
-      mutable wave_height : int;
-      (* starting cycle *)
-      mutable wave_cycle : int;
-      (* data *)
-      waves : W.wave array;
-    }
+  open W
+  open Wave
 
   let get_wave_width (w,d) = 
     if w < 0 then 
       (* subcycle rendering *)
       match d with
-      | W.Clock _ -> w, 1
-      | W.Binary _ 
-      | W.Data _ -> w, 1
+      | Clock _ -> w, 1
+      | Binary _ 
+      | Data _ -> w, 1
     else
       match d with
-      | W.Clock _ -> w, (w+1)*2
-      | W.Data _ 
-      | W.Binary _ -> (w*2)+1, (w+1)*2
+      | Clock _ -> w, (w+1)*2
+      | Data _ 
+      | Binary _ -> (w*2)+1, (w+1)*2
 
   let get_wave_height = function
-    | 0,W.Clock _ -> 0,2
-    | 0,W.Data _ -> 0,2
-    | 0,W.Binary _ -> 0,2
-    | 1,W.Clock _ -> 0,2
-    | 1,W.Data _ -> 1,3
-    | 1,W.Binary _ -> 0,2
-    | h,W.Clock _ -> h-1,h+1
-    | h,W.Data _ -> h-1,h+1
-    | h,W.Binary _ -> h-1,h+1
+    | 0,Clock _ -> 0,2
+    | 0,Data _ -> 0,2
+    | 0,Binary _ -> 0,2
+    | 1,Clock _ -> 0,2
+    | 1,Data _ -> 1,3
+    | 1,Binary _ -> 0,2
+    | h,Clock _ -> h-1,h+1
+    | h,Data _ -> h-1,h+1
+    | h,Binary _ -> h-1,h+1
 
   let get_max_signal_width state = 
     Array.fold_left 
-      (fun m s -> max m (String.length (W.get_name s))) 
+      (fun m s -> max m (String.length (get_name s))) 
       0 state.waves 
 
   let get_max_value_width state = 
@@ -132,7 +122,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
 
   let get_max_wave_width state = 
     let cycles = get_max_cycles state in
-    let w, waw = get_wave_width (state.wave_width, W.Clock "") in
+    let w, waw = get_wave_width (state.wave_width, Clock "") in
     let w_scale = get_w_scale w in
     waw * ((cycles + w_scale - 1) / w_scale)
 
@@ -347,12 +337,12 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
           let cnt = (bounds.w + waw - 1) / waw in
           let off = state.wave_cycle in
           match wave with
-          | W.Clock(_) ->
+          | Clock(_) ->
             draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
-          | W.Binary(_, data) ->
+          | Binary(_, data) ->
             let off = min (W.length data - 1) off in
             draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off
-          | W.Data(_, data, to_str) ->
+          | Data(_, data, to_str) ->
             let off = min (W.length data - 1) off in
             draw_data ~ctx ~style ~bounds ~to_str ~w:ww ~h:wh ~data ~off)
     end
@@ -381,12 +371,12 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         (fun bounds wave ->
           let _, wah = get_wave_height (state.wave_height, wave) in
           match wave with
-          | W.Clock _ -> ()
-          | W.Binary(_, d) ->
+          | Clock _ -> ()
+          | Binary(_, d) ->
             let off = state.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
             draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str d)
-          | W.Data(_, d, to_str) ->
+          | Data(_, d, to_str) ->
             let off = state.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
             draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (to_str d))

@@ -7,28 +7,14 @@ module type E = sig
   val to_str : elt -> string
 end
 
-(* static (read only) buffer *)
 module type S = sig
   include E
   type t
   val length : t -> int
   val get : t -> int -> elt
   val init : int -> (int -> elt) -> t
-end
-
-(* dynamic (growable) buffer *)
-module type D = sig
-  include S
   val make : unit -> t
   val set : t -> int -> elt -> unit
-end
-
-module Int = struct
-  type elt = int
-  let zero = 0 
-  let one = 1
-  let compare a b = a = b
-  let to_str = string_of_int
 end
 
 module Bits(B : HardCaml.Comb.S) = struct
@@ -39,16 +25,9 @@ module Bits(B : HardCaml.Comb.S) = struct
   let to_str = B.to_bstr
 end
 
-module Make_static(E : E) = struct
-  include E
-  type t = elt array
-  let length = Array.length
-  let get = Array.get
-  let init = Array.init
-end
-
 module Make_dynamic(E : E) = struct
   include E
+
   type t = 
     {
       mutable data : elt array;
@@ -104,11 +83,20 @@ module type W = sig
   val get_data : wave -> t
   val get_to_str : wave -> (elt -> string)
 
+  type waves = 
+    {
+      mutable wave_width : int; (** width of wave cycle *)
+      mutable wave_height : int; (** height of wave cycle *)
+      mutable wave_cycle : int; (** start cycle *)
+      waves : wave array; (** data *)
+    }
+
 end
 
-module Make(S : S) = struct
+module Make(E : E) = struct
 
-  include S
+  module D = Make_dynamic(E)
+  include D
 
   type wave = 
     | Clock of string
@@ -129,6 +117,14 @@ module Make(S : S) = struct
     | Clock(n) -> failwith "no clock to_str"
     | Binary(_,_) -> failwith "no binary to_str"
     | Data(_,_,f) -> f
+
+  type waves = 
+    {
+      mutable wave_width : int; (** width of wave cycle *)
+      mutable wave_height : int; (** height of wave cycle *)
+      mutable wave_cycle : int; (** start cycle *)
+      waves : wave array; (** data *)
+    }
 
 end
 

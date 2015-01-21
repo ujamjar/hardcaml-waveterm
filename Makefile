@@ -1,7 +1,7 @@
 
 LIBS = _build/HardCamlWaveTerm.cma _build/HardCamlWaveLTerm.cma \
 		   _build/HardCamlWaveTerm.cmxa _build/HardCamlWaveLTerm.cmxa 
-APPS = waveterm.native wavedraw.native testsim.native
+APPS = waveterm.native wavedraw.native testsim.native testsim_lwt.native
 
 .PHONY: all libs apps
 

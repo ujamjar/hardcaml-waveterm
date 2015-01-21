@@ -4,19 +4,20 @@ open LTerm_key
 open CamomileLibrary
 
 module B = HardCaml.Bits.Comb.IntbitsList
-module Ui = HardCamlWaveLTerm.Ui.Make(B)
+module W = HardCamlWaveTerm.Wave.Make(HardCamlWaveTerm.Wave.Bits(B))
+module Ui = HardCamlWaveLTerm.Ui.Make(B)(W)
 
 let rand length bits = 
   let open Ui in
-  let w = D.make () in
+  let w = W.make () in
   for i=0 to length-1 do
-    D.set w i (B.srand bits)
+    W.set w i (B.srand bits)
   done;
   w
 
 let get_waves wave_width wave_height = 
   let open Ui in
-  R.{
+  W.{
     wave_width;
     wave_height;
     wave_cycle = 0;
@@ -31,8 +32,7 @@ let get_waves wave_width wave_height =
 
 let run () =
   let waves = get_waves 3 1 in
-  lwt ui = Ui.init waves in
-  Ui.loop ui waves
+  Ui.run waves
   
 lwt () = run ()
 

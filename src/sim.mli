@@ -1,12 +1,8 @@
 open HardCaml
 
-module Make(B : Comb.S) : sig
-
-  module D : Wave.D
-  module W : Wave.W
-  module R : module type of Render.Static(W)
+module Make(B : Comb.S)(W : Wave.W with type elt = B.t) : sig
 
   val wrap : B.t Cyclesim.Api.cyclesim -> 
-    B.t Cyclesim.Api.cyclesim * R.R.t
+    B.t Cyclesim.Api.cyclesim * W.waves
 
 end

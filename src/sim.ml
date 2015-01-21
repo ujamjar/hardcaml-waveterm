@@ -1,13 +1,9 @@
 (* connect to simulator *)
 open HardCaml
 
-module Make(B : Comb.S) = struct
+module Make(B : Comb.S)(W : Wave.W with type elt = B.t) = struct
 
   open Cyclesim.Api
-
-  module D = Wave.Make_dynamic(Wave.Bits(B))
-  module W = Wave.Make(D)
-  module R = Render.Static(W)
 
   let wrap sim = 
     
@@ -15,17 +11,17 @@ module Make(B : Comb.S) = struct
 
     let clock = W.Clock "clock", (fun _ -> ()) in
     let reset = 
-      let d = D.make () in
-      W.Binary("reset", d), (fun v -> D.set d !cycle (if v then B.vdd else B.gnd))
+      let d = W.make () in
+      W.Binary("reset", d), (fun v -> W.set d !cycle (if v then B.vdd else B.gnd))
     in
 
     let port (n,v) =
-      let d = D.make () in
+      let d = W.make () in
       let wave = 
         if B.width !v = 1 then W.Binary(n, d)
         else W.Data(n, d, B.to_bstr)
       in
-      wave, (fun _ -> D.set d !cycle !v)
+      wave, (fun _ -> W.set d !cycle !v)
     in
 
     let ports = List.concat [
@@ -38,7 +34,7 @@ module Make(B : Comb.S) = struct
     let waves = Array.of_list (List.map fst ports) in
     let updates = Array.of_list (List.map snd ports) in
 
-    let waves = R.R.({
+    let waves = W.({
       wave_width = 3;
       wave_height = 1;
       wave_cycle = 0;

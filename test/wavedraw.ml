@@ -1,4 +1,5 @@
 (* HTML or UFT-8 file generation with various options *)
+open HardCamlWaveTerm
 
 type mode = Utf8 | Html | Html_scroll
 
@@ -39,36 +40,35 @@ let () = Arg.parse
   (fun _ -> ()) "wave drawings"
 
 module B = HardCaml.Bits.Comb.IntbitsList
-module D = Wave.Make_dynamic(Wave.Bits(B))
-module W = Wave.Make(D)
+module W = Wave.Make(Wave.Bits(B))
 module G = Gfx.In_memory.Api
 module R = Render.Static(W)
 open Gfx
 open G
 
 let rand length bits = 
-  let w = D.make () in
+  let w = W.make () in
   for i=0 to length-1 do
-    D.set w i (B.srand bits)
+    W.set w i (B.srand bits)
   done;
   w
 
 let toggle length n bits = 
-  let w = D.make () in
+  let w = W.make () in
   for i=0 to length-1 do
-    D.set w i (if (i/n) mod 2 = 0 then B.consti bits 0 else B.consti bits 1)
+    W.set w i (if (i/n) mod 2 = 0 then B.consti bits 0 else B.consti bits 1)
   done;
   w
 
 let setone length n bits = 
-  let w = D.make () in
-  D.set w (length-1) (B.consti bits 0);
-  D.set w n (B.consti bits 1);
+  let w = W.make () in
+  W.set w (length-1) (B.consti bits 0);
+  W.set w n (B.consti bits 1);
   w
 
 let waves = 
   let cycles = 500 in
-  R.R.{
+  W.{
     wave_width = !width;
     wave_height = !height;
     wave_cycle = !start;
