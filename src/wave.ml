@@ -1,46 +1,85 @@
-module type S = sig
+(* element type *)
+module type E = sig
   type elt
-  type t
   val zero : elt 
   val one : elt
   val compare : elt -> elt -> bool
+  val to_str : elt -> string
+end
+
+(* static (read only) buffer *)
+module type S = sig
+  include E
+  type t
   val length : t -> int
   val get : t -> int -> elt
-  val to_str : elt -> string
+  val init : int -> (int -> elt) -> t
+end
+
+(* dynamic (growable) buffer *)
+module type D = sig
+  include S
+  val make : unit -> t
+  val set : t -> int -> elt -> unit
 end
 
 module Int = struct
   type elt = int
-  type t = int array
   let zero = 0 
   let one = 1
   let compare a b = a = b
-  let length = Array.length
-  let get = Array.get
   let to_str = string_of_int
 end
 
 module Bits(B : HardCaml.Comb.S) = struct
   type elt = B.t
+  let zero = B.gnd
+  let one = B.vdd
+  let compare a b = a = b
+  let to_str = B.to_bstr
+end
+
+module Make_static(E : E) = struct
+  include E
+  type t = elt array
+  let length = Array.length
+  let get = Array.get
+  let init = Array.init
+end
+
+module Make_dynamic(E : E) = struct
+  include E
   type t = 
     {
       mutable data : elt array;
       mutable length : int;
     }
-  let zero = B.gnd
-  let one = B.vdd
-  let compare a b = a = b
+  
   let length d = d.length
+  
   let get d n = 
     if n < d.length then
       Array.get d.data n
     else
       raise (Invalid_argument "wave out of bounds")
-  let make () = { data = [||]; length = 0; }
+  
+  let make () = 
+    { 
+      data = [||]; 
+      length = 0; 
+    }
+  
+  let init n f = 
+    {
+      data = Array.init n f;
+      length = n;
+    }
+  
   let resize d = 
     let old_data = d.data in
     let new_len = max 1 (Array.length d.data * 2) in
-    d.data <- Array.init new_len (fun i -> try old_data.(i) with _ -> B.gnd)
+    d.data <- Array.init new_len (fun i -> try old_data.(i) with _ -> zero)
+  
   let rec set d n v = 
     try begin
       Array.set d.data n v;
@@ -49,7 +88,7 @@ module Bits(B : HardCaml.Comb.S) = struct
       resize d;
       set d n v
     end
-  let to_str = B.to_bstr
+
 end
 
 module type W = sig

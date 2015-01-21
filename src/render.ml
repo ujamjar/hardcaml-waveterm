@@ -81,7 +81,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     if w < 0 then 
       (* subcycle rendering *)
       match d with
-      | W.Clock _ -> w, 2
+      | W.Clock _ -> w, 1
       | W.Binary _ 
       | W.Data _ -> w, 1
     else
@@ -128,10 +128,13 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         max m (try W.length (W.get_data d) with _ -> 0))
       0 state.waves
 
+  let get_w_scale w = if w < -1 then - w else 1
+
   let get_max_wave_width state = 
     let cycles = get_max_cycles state in
-    let _, waw = get_wave_width (state.wave_width, W.Clock "") in
-    waw * cycles
+    let w, waw = get_wave_width (state.wave_width, W.Clock "") in
+    let w_scale = get_w_scale w in
+    waw * ((cycles + w_scale - 1) / w_scale)
 
   let get_max_wave_height state = 
     Array.fold_left
@@ -176,8 +179,6 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     for i=0 to cnt - 1 do
       draw_clock_cycle ~ctx ~style ~bounds ~w ~h ~c:(i*waw)
     done
-
-  let get_w_scale w = if w < -1 then - w else 1
 
   let get_fuzzy_data data i w_scale = 
     let rec f i w_scale prev = 
@@ -311,7 +312,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         else if same prev cur then run extend false true
         else run transn true false 
     in
-    try f None (-1) 0 off
+    try f None (-1) 0 0
     with _ -> ()
 
   let rec draw_iter i bounds state f = 

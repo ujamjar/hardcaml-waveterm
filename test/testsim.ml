@@ -1,7 +1,7 @@
 open HardCaml.Api
 open Comb
 
-module Wave = HardCamlWaveTerm.Sim.Make(B)
+module W = HardCamlWaveTerm.Sim.Make(B)
 
 module I = interface
   a[4] b[4]
@@ -20,7 +20,7 @@ let f i =
 module G = Interface.Gen(I)(O)
 
 let circ,sim,i,o = G.make "test" f
-let sim, waves = Wave.wrap sim
+let sim, waves = W.wrap sim
 let () =
   HardCaml.Cyclesim.Api.reset sim;
   for l=0 to 7 do
@@ -30,8 +30,9 @@ let () =
       HardCaml.Cyclesim.Api.cycle sim;
     done;
   done;
-  HardCamlWaveTerm.Write.(utf8 ~styler:term_styler print_string 
-    (Wave.R.(draw 
-      ~style:HardCamlWaveTerm.Render.Styles.colour_on_black ~cols:200
-      { waves with R.wave_height=1; wave_cycle=63 })))
+  let open HardCamlWaveTerm in
+  Write.(utf8 ~styler:term_styler print_string 
+    (W.R.(draw 
+      ~style:Render.Styles.colour_on_black ~cols:200
+      { waves with R.wave_height=1; })))
 

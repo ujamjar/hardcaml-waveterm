@@ -39,7 +39,7 @@ let () = Arg.parse
   (fun _ -> ()) "wave drawings"
 
 module B = HardCaml.Bits.Comb.IntbitsList
-module D = Wave.Bits(B)
+module D = Wave.Make_dynamic(Wave.Bits(B))
 module W = Wave.Make(D)
 module G = Gfx.In_memory.Api
 module R = Render.Static(W)
@@ -67,32 +67,30 @@ let setone length n bits =
   w
 
 let waves = 
-    R.R.{
-      wave_width = !width;
-      wave_height = !height;
-      wave_cycle = !start;
-      waves  = [|
-        W.Clock "clock";
-        (*W.Binary("a", rand 50 1);
-        W.Data("b", rand 50 10, B.to_bstr);
-        W.Data("c", rand 50 4, (fun s -> Printf.sprintf "%1x" (B.to_int s)));
-        W.Data("data_out_port", rand 50 6, (fun s -> Printf.sprintf "%i" (B.to_sint s)));*)
-        W.Binary("toggle1", toggle 50 1 1);
-        W.Binary("toggle2", toggle 50 2 1);
-        W.Binary("toggle3", toggle 50 3 1);
-        W.Binary("toggle4", toggle 50 4 1);
-        W.Data("doggle1", toggle 50 1 1, W.to_str);
-        W.Data("doggle2", toggle 50 2 1, W.to_str);
-        W.Data("doggle3", toggle 50 3 1, W.to_str);
-        W.Data("doggle4", toggle 50 4 1, W.to_str);
-        W.Data("doggle8", toggle 50 8 1, W.to_str);
-        W.Data("doggle8", toggle 50 9 1, W.to_str);
-        W.Data("doggle8", toggle 50 10 1, W.to_str);
-        W.Data("doggle8", toggle 50 11 1, W.to_str);
-        W.Data("doggle8", toggle 50 12 1, W.to_str);
-        W.Data("long", setone 50 32 1, W.to_str);
-      |];
-    }
+  let cycles = 500 in
+  R.R.{
+    wave_width = !width;
+    wave_height = !height;
+    wave_cycle = !start;
+    waves  = [|
+      W.Clock "clock";
+      W.Binary("a", rand cycles 1);
+      W.Data("b", rand cycles 10, B.to_bstr);
+      W.Data("c", rand cycles 4, (fun s -> Printf.sprintf "%1x" (B.to_int s)));
+      W.Data("data_out_port", rand cycles 6, (fun s -> Printf.sprintf "%i" (B.to_sint s)));
+      W.Binary("toggle1", toggle cycles 1 1);
+      W.Binary("toggle2", toggle cycles 2 1);
+      W.Binary("toggle3", toggle cycles 3 1);
+      W.Binary("toggle4", toggle cycles 4 1);
+      W.Data("doggle1", toggle cycles 1 1, W.to_str);
+      W.Data("doggle2", toggle cycles 2 1, W.to_str);
+      W.Data("doggle3", toggle cycles 3 1, W.to_str);
+      W.Data("doggle4", toggle cycles 4 1, W.to_str);
+      W.Data("doggle8", toggle cycles 8 1, W.to_str);
+      W.Data("boogle", setone cycles 32 1, W.to_str);
+      W.Data("boogle", setone cycles (cycles-1) 1, W.to_str);
+    |];
+  }
 
 (* static user interface *)
 let draw_static () = 

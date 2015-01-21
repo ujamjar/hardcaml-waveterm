@@ -5,7 +5,7 @@ module Make(B : Comb.S) = struct
 
   open Cyclesim.Api
 
-  module D = Wave.Bits(B)
+  module D = Wave.Make_dynamic(Wave.Bits(B))
   module W = Wave.Make(D)
   module R = Render.Static(W)
 

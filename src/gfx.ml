@@ -30,7 +30,7 @@ type piece =
   (* quarter blocks *)
   QTL | QBR | QBL | QTR
 
-let bars = false (* kinda interesting *)
+let bars = true (* kinda interesting *)
 
 let unicode_of_piece = function
   | TL  -> 0x2518
