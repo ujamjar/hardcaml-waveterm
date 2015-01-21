@@ -33,19 +33,19 @@ $ wavedraw -html static > test/wave-static.html
 * [x] simplify wave type functor
 * [x] configure data display
 * [x] split library for javascript mode (lambda-term deps in seperate package)
-* [ ] sub cycle display (scaling factor < 1)
+* [x] sub cycle display (scaling factor < 1)
 
 ## Interactive app
 
-* [ ] connect to testbench
-* [ ] read data as stram
+* [x] connect to testbench
+* [x] Lwt based interactive viewing
 * [ ] scroll names/values windows
 * [ ] resize sub-windows
 * [ ] interactive testbench driver mode (edit signal values, send back to simulation)
 
 ## Static drawing
 
-* [ ] set start cycle (horizontal)
+* [x] set start cycle (horizontal)
 * [ ] set start wave (vertical)
-* [ ] load data from file
+* [x] load data from file
 

@@ -19,7 +19,7 @@ module Make(B : Comb.S)(W : Wave.W with type elt = B.t) = struct
       let d = W.make () in
       let wave = 
         if B.width !v = 1 then W.Binary(n, d)
-        else W.Data(n, d, B.to_bstr)
+        else W.Data(n, d, W.B)
       in
       wave, (fun _ -> W.set d !cycle !v)
     in

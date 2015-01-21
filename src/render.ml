@@ -342,9 +342,9 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
           | Binary(_, data) ->
             let off = min (W.length data - 1) off in
             draw_binary_data ~ctx ~style ~bounds ~w:ww ~h:wh ~data ~off
-          | Data(_, data, to_str) ->
+          | Data(_, data, _) ->
             let off = min (W.length data - 1) off in
-            draw_data ~ctx ~style ~bounds ~to_str ~w:ww ~h:wh ~data ~off)
+            draw_data ~ctx ~style ~bounds ~to_str:(W.get_to_str wave) ~w:ww ~h:wh ~data ~off)
     end
 
   let draw_signals 
@@ -375,10 +375,11 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
           | Binary(_, d) ->
             let off = state.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
-            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_str d)
-          | Data(_, d, to_str) ->
+            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_bstr d)
+          | Data(_, d, _) ->
             let off = state.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
+            let to_str = W.get_to_str wave in
             draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (to_str d))
     end
 

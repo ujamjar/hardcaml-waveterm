@@ -4,7 +4,11 @@ module type E = sig
   val zero : elt 
   val one : elt
   val compare : elt -> elt -> bool
-  val to_str : elt -> string
+  val to_bstr : elt -> string
+  val to_sstr : elt -> string
+  val to_ustr : elt -> string
+  val to_hstr : elt -> string
+  val to_int : elt -> int
 end
 
 module type S = sig
@@ -22,7 +26,51 @@ module Bits(B : HardCaml.Comb.S) = struct
   let zero = B.gnd
   let one = B.vdd
   let compare a b = a = b
-  let to_str = B.to_bstr
+
+  (* string conversions *)
+  let to_bstr = B.to_bstr
+
+  let rec to_hstr b = 
+    let to_char i = 
+      Char.chr (if i < 10 then Char.code '0' + i else Char.code 'A' + i - 10)
+    in
+    let blen = B.width b in
+    let slen = (blen + 3) / 4 in
+    String.init slen (fun i ->
+      let i = slen - i - 1 in
+      let l = i*4 in
+      let h = (min blen (l+4)) - 1 in
+      to_char (B.to_int (B.select b h l)))
+
+  (* convert to integer using arbitrary precision. *)
+  let to_ustr b = 
+    let max = 29 in (* safe max positive int bits *)
+    if B.width b <= max then string_of_int (B.to_int b)
+    else
+      (* convert with big ints *)
+      let rec f b acc =
+        let (+:) = Big_int.add_big_int in
+        let (<<:) = Big_int.shift_left_big_int in
+        let to_big b = Big_int.big_int_of_int (B.to_int b) in
+        if B.width b <= max then
+          (* result *)
+          (acc <<: (B.width b)) +: to_big b
+        else 
+          let t, b = B.sel_top b max, B.drop_top b max in
+          f b ((acc <<: max) +: to_big t)
+      in
+      Big_int.(string_of_big_int (f b zero_big_int))
+
+  (* signed conversion uses unsigned conversion with detection of sign *)
+  let to_sstr b = 
+    let max = 29 in (* safe max positive int bits *)
+    if B.width b <= max then string_of_int (B.to_sint b)
+    else 
+      if B.to_int (B.msb b) = 0 then to_ustr b
+      else
+        "-" ^ (to_ustr B.((~: b) +:. 1)) (* conv -ve to +ve, leading '-' *)
+
+  let to_int = B.to_int
 end
 
 module Make_dynamic(E : E) = struct
@@ -74,10 +122,18 @@ module type W = sig
 
   include S
 
+  type to_str =
+    | B (* binary *)
+    | H (* hex *)
+    | U (* unsigned int *)
+    | S (* signed int *)
+    | F of (elt -> string) (* function *)
+    | I of string list (* index into strings *)
+
   type wave = 
     | Clock of string
     | Binary of string * t
-    | Data of string * t * (elt -> string)
+    | Data of string * t * to_str
 
   val get_name : wave -> string
   val get_data : wave -> t
@@ -91,6 +147,9 @@ module type W = sig
       waves : wave array; (** data *)
     }
 
+  val write : out_channel -> waves -> unit
+  val read : in_channel -> waves
+
 end
 
 module Make(E : E) = struct
@@ -98,10 +157,18 @@ module Make(E : E) = struct
   module D = Make_dynamic(E)
   include D
 
+  type to_str =
+    | B (* binary *)
+    | H (* hex *)
+    | U (* unsigned int *)
+    | S (* signed int *)
+    | F of (elt -> string) (* function *)
+    | I of string list (* index into strings *)
+
   type wave = 
     | Clock of string
     | Binary of string * t
-    | Data of string * t * (elt -> string)
+    | Data of string * t * to_str
 
   let get_name = function
     | Clock(n) -> n
@@ -116,7 +183,15 @@ module Make(E : E) = struct
   let get_to_str = function
     | Clock(n) -> failwith "no clock to_str"
     | Binary(_,_) -> failwith "no binary to_str"
-    | Data(_,_,f) -> f
+    | Data(_,_,f) -> begin
+      match f with
+      | B -> to_bstr
+      | H -> to_hstr
+      | U -> to_ustr
+      | S -> to_sstr
+      | F f -> f
+      | I s -> (fun elt -> try List.nth s (to_int elt) with _ -> "-")
+    end
 
   type waves = 
     {
@@ -125,6 +200,23 @@ module Make(E : E) = struct
       mutable wave_cycle : int; (** start cycle *)
       waves : wave array; (** data *)
     }
+
+  let write ch w = 
+    let w = 
+      { w with waves = Array.map
+        (function 
+          | Clock(n) -> Clock(n)
+          | Binary(n, d) -> 
+            Binary(n, { d with data=Array.init d.length (Array.get d.data); })
+          | Data(n, d, ts) -> 
+            let ts = match ts with F _ -> B | _ -> ts in (* cant marshal functions *)
+            Data(n, { d with data=Array.init d.length (Array.get d.data); }, ts)) 
+        w.waves
+      }
+    in
+    Marshal.to_channel ch w []
+
+  let read ch = (Marshal.from_channel ch : waves)
 
 end
 

@@ -1,15 +1,18 @@
-<{src,test}/*.{ml,mli}>: package(hardcaml)
+<{src,test,apps}/*.{ml,mli}>: package(hardcaml)
 <src/{gfx,wave,render,write,sim}.cmx>: for-pack(HardCamlWaveTerm)
 
 <src/{gfx_lterm,ui}.{ml,mli}>: syntax(camlp4o), package(lambda-term,lwt,lwt.syntax)
 <src/{gfx_lterm,ui}.cmx>: for-pack(HardCamlWaveLTerm)
 
-<test/waveterm.ml>: syntax(camlp4o), package(lwt.syntax,lambda-term)
-<test/{testsim,testsim_lwt}.ml>: syntax(camlp4o), package(hardcaml.syntax,hardcaml,lwt,lwt.syntax)
+<apps/waveterm.ml>: syntax(camlp4o), package(lwt.syntax,lambda-term)
+<apps/waveterm.{byte,native}>: package(lambda-term)
 
-<test/*.{byte,native}>: package(hardcaml)
-<test/{testsim_lwt,testsim,waveterm}.{byte,native}>: package(lambda-term)
+<test/{testsim,testsim_lwt}.ml>: syntax(camlp4o), package(hardcaml.syntax,hardcaml,lwt,lwt.syntax)
+<test/{testsim_lwt,testsim}.{byte,native}>: package(lambda-term)
+
+<{apps,test}/*.{byte,native}>: package(hardcaml)
 
 <src>: include
 <test>: include
+<apps>: include
 true: debug
