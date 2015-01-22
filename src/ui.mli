@@ -3,15 +3,13 @@ module Make (B : HardCaml.Comb.S)
 
   module G : HardCamlWaveTerm.Gfx.Api
 
-  val draw : 
-    ?style:HardCamlWaveTerm.Render.Styles.t -> 
-    G.ctx -> W.waves -> unit
+  type state
 
-  val loop : ?timeout:float -> LTerm_ui.t -> W.waves -> unit Lwt.t
+  val loop : ?timeout:float -> (LTerm_ui.t * state) -> unit Lwt.t
 
   val init : 
     ?style:HardCamlWaveTerm.Render.Styles.t ->
-    W.waves -> LTerm_ui.t Lwt.t
+    W.waves -> (LTerm_ui.t * state) Lwt.t
 
   (** Run wave viewer UI *)
   val run : 

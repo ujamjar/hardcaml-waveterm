@@ -19,9 +19,7 @@ let cycles = 50
 
 let wave_toggle = 
   W.({
-    wave_width = 3;
-    wave_height = 1;
-    wave_cycle = 0;
+    cfg = default;
     waves = [|
       W.Clock "clock";
       W.Binary("b1", toggle cycles 1 1);
@@ -37,9 +35,12 @@ let wave_toggle =
 
 let wave_data_render = 
   W.({
-    wave_width = 8;
-    wave_height = 4;
-    wave_cycle = 10;
+    cfg = { default with
+      wave_width = 8;
+      wave_height = 4;
+      start_cycle = 10;
+      start_signal = 0;
+    };
     waves = [|
       W.Clock "clock";
       W.Data("binary", rand cycles 2, W.B);

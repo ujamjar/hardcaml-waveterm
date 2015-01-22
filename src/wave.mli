@@ -48,7 +48,10 @@ module type W = sig
     {
       mutable wave_width : int; (** width of wave cycle *)
       mutable wave_height : int; (** height of wave cycle *)
-      mutable wave_cycle : int; (** start cycle *)
+      mutable start_cycle : int; (** start cycle *)
+      mutable start_signal : int; (** start signal *)
+      mutable wave_cursor : int; (** waveform cursor *)
+      mutable signal_cursor : int; (** signal cursor *)
     }
 
   val default : cfg

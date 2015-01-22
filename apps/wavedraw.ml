@@ -20,8 +20,8 @@ or 'class' styler options.
 
 Mutliple outputs can be generated.  This happens
 whenever a file-in argument is read.  Therefore,
-the output file, if any, must be specified before
-the corresponding input file.
+the output file, if any, and arguments must be specified 
+before the corresponding input file.
 
 The output file and mode are reset to stdout and UTF-8
 between each invocation. ie
@@ -38,7 +38,9 @@ type styler = No_style | Css | Css_class | Term
 
 (* command line *)
 let rows, cols = ref 0, ref 80
-let width, height, start = ref 3, ref 1, ref 0
+let width, height = ref 3, ref 1
+let start_cycle, start_signal = ref 0, ref 0
+let cursor = ref (-1)
 let styler = ref No_style
 let scheme = ref Render.Styles.colour_on_black
 let mode = ref Utf8
@@ -80,10 +82,12 @@ let gen name = begin
       output_string f, (fun () -> close_out f)
   in
   let waves = W.({ (get_waves name) with
-    cfg = { 
+    cfg = { default with (* XXX live with warning for now ... *)
       wave_width = !width;
       wave_height = !height;
-      wave_cycle = !start;
+      start_cycle = !start_cycle;
+      start_signal = !start_signal;
+      wave_cursor = !cursor;
     }
   }) in
   let style_fn = 
@@ -155,7 +159,9 @@ let () =
     "-cols", Arg.Set_int cols, "number of cols";
     "-width", Arg.Set_int width, "wave cycle width";
     "-height", Arg.Set_int height, "wave cycle height";
-    "-start", Arg.Set_int start, "wave start cycle";
+    "-cycle", Arg.Set_int start_cycle, "wave start cycle";
+    "-signal", Arg.Set_int start_signal, "wave start signal";
+    "-cursor", Arg.Set_int cursor, "cursor";
     "-styler", Arg.Symbol(["none"; "term"; "css"; "class"],
       (function
         | "term" -> styler := Term 

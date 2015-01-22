@@ -141,9 +141,12 @@ module type W = sig
 
   type cfg = 
     {
-      mutable wave_width : int; (** width of wave cycle *)
-      mutable wave_height : int; (** height of wave cycle *)
-      mutable wave_cycle : int; (** start cycle *)
+      mutable wave_width : int; 
+      mutable wave_height : int; 
+      mutable start_cycle : int; 
+      mutable start_signal : int; 
+      mutable wave_cursor : int;
+      mutable signal_cursor : int;
     }
 
   val default : cfg
@@ -204,14 +207,20 @@ module Make(E : E) = struct
     {
       mutable wave_width : int; 
       mutable wave_height : int; 
-      mutable wave_cycle : int; 
+      mutable start_cycle : int; 
+      mutable start_signal : int; 
+      mutable wave_cursor : int;
+      mutable signal_cursor : int;
     }
 
   let default = 
     {
       wave_width = 3;
       wave_height = 1;
-      wave_cycle = 0;
+      start_cycle = 0;
+      start_signal = 0;
+      wave_cursor = -1;
+      signal_cursor = -1;
     }
       
   type waves = 

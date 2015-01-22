@@ -11,23 +11,32 @@ module Make
   module G = Gfx_lterm.Api
   module R = Render.Make(G)(W)
 
-  let rec loop ?timeout ui waves =
+  let show_status = true
+
+  type state = 
+    {
+      mutable bounds : Render.Bounds.t;
+      waves : W.waves;
+    }
+
+  let rec loop ?timeout (ui,state) =
     let wait_ui = LTerm_ui.wait ui >>= fun ev -> Lwt.return (`event ev) in
     let sleepy time = Lwt_unix.sleep time >> Lwt.return `timeout in
     let process = function
-      | `timeout -> LTerm_ui.draw ui; loop ?timeout ui waves
-      | `event ev -> ui_event ?timeout ui waves ev
+      | `timeout -> LTerm_ui.draw ui; loop ?timeout (ui, state)
+      | `event ev -> ui_event ?timeout (ui,state) ev
     in
 
     match timeout with
     | None -> wait_ui >>= process
     | Some(timeout) -> Lwt.pick [ sleepy timeout; wait_ui ] >>= process
 
-  and ui_event ?timeout ui waves ev = 
+  and ui_event ?timeout (ui, state) ev = 
+      let waves = state.waves in
       let open W in
       let draw_loop () = 
         LTerm_ui.draw ui;
-        loop ?timeout ui waves
+        loop ?timeout (ui,state) 
       in
       match ev with
       (* quit *)
@@ -52,52 +61,106 @@ module Make
         waves.cfg.wave_width <- waves.cfg.wave_width + 1;
         draw_loop ()
 
-      (* horizontal offset *)
+      (* cycle offset *)
       | LTerm_event.Key{ code = Home } ->
-        waves.cfg.wave_cycle <- 0;
-        draw_loop ()
-      | LTerm_event.Key{ code = Left; shift = true } ->
-        waves.cfg.wave_cycle <- max 0 (waves.cfg.wave_cycle - 10);
-        draw_loop ()
-      | LTerm_event.Key{ code = Left } ->
-        waves.cfg.wave_cycle <- max 0 (waves.cfg.wave_cycle - 1);
+        waves.cfg.start_cycle <- 0;
         draw_loop ()
       | LTerm_event.Key{ code = End } ->
-        waves.cfg.wave_cycle <- R.get_max_cycles waves - 1;
+        waves.cfg.start_cycle <- R.get_max_cycles waves - 1;
+        draw_loop ()
+      | LTerm_event.Key{ code = Left; shift = true } ->
+        waves.cfg.start_cycle <- max 0 (waves.cfg.start_cycle - 10);
+        draw_loop ()
+      | LTerm_event.Key{ code = Left } ->
+        waves.cfg.start_cycle <- max 0 (waves.cfg.start_cycle - 1);
         draw_loop ()
       | LTerm_event.Key{ code = Right; shift = true } ->
-        waves.cfg.wave_cycle <- min (R.get_max_cycles waves - 1) (waves.cfg.wave_cycle + 10);
+        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
+                                     (waves.cfg.start_cycle + 10);
         draw_loop ()
       | LTerm_event.Key{ code = Right } ->
-        waves.cfg.wave_cycle <- min (R.get_max_cycles waves - 1) (waves.cfg.wave_cycle + 1);
+        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
+                                     (waves.cfg.start_cycle + 1);
         draw_loop ()
-      (*| LTerm_event.Resize{ rows=r; cols=c } ->
-        loop_wave ui*)
+
+      (* signal offset *)
+      | LTerm_event.Key{ code = Up; shift = true } ->
+        waves.cfg.start_signal <- max 0 (waves.cfg.start_signal - 10);
+        draw_loop ()
+      | LTerm_event.Key{ code = Up } ->
+        waves.cfg.start_signal <- max 0 (waves.cfg.start_signal - 1);
+        draw_loop ()
+      | LTerm_event.Key{ code = Down; shift = true } ->
+        waves.cfg.start_signal <- min (R.get_max_signals waves - 1) 
+                                      (waves.cfg.start_signal + 10);
+        draw_loop ()
+      | LTerm_event.Key{ code = Down } ->
+        waves.cfg.start_signal <- min (R.get_max_signals waves - 1) 
+                                      (waves.cfg.start_signal + 1);
+        draw_loop ()
+
+      (* terminal resize *)
+      | LTerm_event.Resize size ->
+        let bounds = Gfx.{r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows} in
+        state.bounds <- Render.Bounds.fit_to_window ~status:show_status bounds;
+        draw_loop ()
+
+      (* mouse event *)
+      | LTerm_event.Mouse m when LTerm_mouse.(m.button = Button1 && m.control) -> begin
+        let open LTerm_mouse in
+        begin
+          match R.pick ~bounds:state.bounds ~r:m.row ~c:m.col waves with
+          | R.Wave(cycle,signal) -> state.waves.cfg.start_cycle <- cycle;
+          | R.Signal(signal) | R.Value(signal) -> state.waves.cfg.start_signal <- signal
+          | _ -> ()
+        end;
+        draw_loop ()
+      end
+
+      | LTerm_event.Mouse m when LTerm_mouse.(m.button = Button1) -> begin
+        let open LTerm_mouse in
+        begin
+          match R.pick ~bounds:state.bounds ~r:m.row ~c:m.col waves with
+          | R.Wave(cycle,signal) -> state.waves.cfg.wave_cursor <- cycle
+          | R.Signal(signal) | R.Value(signal) -> state.waves.cfg.signal_cursor <- signal
+          | _ -> ()
+        end;
+        draw_loop ()
+      end
+
       | ev ->
-        loop ?timeout ui waves
+        loop ?timeout (ui, state)
 
   let sdef = Render.Styles.colour_on_black
 
-  let draw ?(style=sdef) ctx waves = 
+  let init_state term waves = 
+    let size = LTerm.size term in
+    let bounds = Gfx.{r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows} in
+    let bounds = Render.Bounds.fit_to_window ~status:show_status bounds in
+    Lwt.return
+      {
+        bounds = bounds;
+        waves = waves;
+      }
 
-    (* get bounds explictly - we may want to change them through the ui *)
-    let bounds = G.get_bounds ctx in
-    let bounds = Render.Bounds.fit_to_window ~status:true bounds in
-
-    R.draw_ui ~style ~ctx ~bounds waves 
+  let draw style state ui matrix = 
+    let size = LTerm_ui.size ui in
+    let ctx = LTerm_draw.context matrix size in
+    R.draw_ui ~style ~ctx ~bounds:state.bounds state.waves
 
   let init ?(style=sdef) waves = 
     Lazy.force LTerm.stdout >>= fun term ->
-    LTerm_ui.create term 
-      (fun ui matrix -> 
-        let size = LTerm_ui.size ui in
-        let ctx = LTerm_draw.context matrix size in
-        draw ~style ctx waves) 
+    LTerm.enable_mouse term >>
+    (* initialization *)
+    init_state term waves >>= fun state ->
+    (* drawing functon *)
+    LTerm_ui.create term (draw style state) >>= fun ui ->
+    Lwt.return (ui,state)
 
   let run ?(style=sdef) ?timeout waves = 
-    init ~style waves >>= fun ui ->
+    init ~style waves >>= fun (ui,state) ->
     (try_lwt
-      loop ?timeout ui waves
+      loop ?timeout (ui,state) 
     finally
       LTerm_ui.quit ui)
 

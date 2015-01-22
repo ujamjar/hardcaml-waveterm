@@ -1,7 +1,7 @@
-
+EXT=byte
 LIBS = _build/HardCamlWaveTerm.cma _build/HardCamlWaveLTerm.cma \
 		   _build/HardCamlWaveTerm.cmxa _build/HardCamlWaveLTerm.cmxa 
-APPS = waveterm.native wavedraw.native testsim.native testsim_lwt.native
+APPS = waveterm.$(EXT) wavedraw.$(EXT) testsim.$(EXT) testsim_lwt.$(EXT)
 
 .PHONY: all libs apps
 

@@ -25,6 +25,10 @@ end
 
 module Bounds = struct
 
+  (* XXX Some stuff would be much simplified if the rects excluded the border
+     and we just adjusted for it here.  If the border is drawn it is on 
+     the outside of the rendering window *)
+
   type t = 
     {
       signals : Gfx.rect;
@@ -123,6 +127,8 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         max m (try W.length (W.get_data d) with _ -> 0))
       0 state.waves
 
+  let get_max_signals state = Array.length state.waves
+
   let get_w_scale w = if w < -1 then - w else 1
 
   let get_max_wave_width state = 
@@ -132,11 +138,14 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     waw * ((cycles + w_scale - 1) / w_scale)
 
   let get_max_wave_height state = 
-    Array.fold_left
-      (fun a d ->
-        let _, wah = get_wave_height (state.cfg.wave_height, d) in
-        a + wah) 
-      0 state.waves
+    let rec f acc i = 
+      if i < Array.length state.waves then 
+        let _, wah = get_wave_height (state.cfg.wave_height, state.waves.(i)) in
+        f (acc + wah) (i+1)
+      else
+        acc
+    in
+    f 0 state.cfg.start_signal 
 
   let get_max_bounds state = 
     let open Gfx in
@@ -315,7 +324,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     let open Gfx in
     if i < Array.length state.waves && bounds.h > 0 then begin
       let _, wah = get_wave_height (state.cfg.wave_height, state.waves.(i)) in
-      f bounds state.waves.(i);
+      f i bounds state.waves.(i);
       draw_iter (i+1) { bounds with r = bounds.r + wah; h = bounds.h - wah } state f
     end
 
@@ -329,11 +338,14 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       let bounds = { r=bounds.r+1; c=bounds.c+1; w=max 0 (bounds.w-2); h=max 0 (bounds.h-2) } in
       bounds
 
-  let draw_cursor ~ctx ~bounds ~state cycle = 
+  let draw_cursor ~ctx ~bounds ~state = 
     let open Gfx in
-    let _, waw = get_wave_width (state.cfg.wave_width, Clock "") in
-    for r=0 to bounds.h-1 do
-      inv ~ctx ~bounds ~r ~c:(cycle*waw)
+    let w, waw = get_wave_width (state.cfg.wave_width, Clock "") in
+    let w_scale = get_w_scale w in
+    let cycle = state.cfg.wave_cursor - state.cfg.start_cycle in
+    let c = (cycle * waw) / w_scale in
+    for r=0 to bounds.h-1 do (* assume clipped when drawn *)
+      inv ~ctx ~bounds ~r ~c
     done
 
   let draw_wave 
@@ -344,12 +356,12 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Waves" in
       let style = get_style style in
       fill ~ctx ~bounds ~style ' ';
-      draw_iter 0 bounds state
-        (fun bounds wave ->
+      draw_iter state.cfg.start_signal bounds state
+        (fun _ bounds wave ->
           let wh, wah = get_wave_height (state.cfg.wave_height, wave) in
           let ww, waw = get_wave_width (state.cfg.wave_width, wave) in
           let cnt = (bounds.w + waw - 1) / waw in
-          let off = state.cfg.wave_cycle in
+          let off = state.cfg.start_cycle in
           match wave with
           | Clock(_) ->
             draw_clock_cycles ~ctx ~style ~bounds ~w:ww ~waw ~h:wh ~cnt 
@@ -359,7 +371,14 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
           | Data(_, data, _) ->
             let off = min (W.length data - 1) off in
             draw_data ~ctx ~style ~bounds ~to_str:(W.get_to_str wave) ~w:ww ~h:wh ~data ~off);
-      draw_cursor ~ctx ~bounds ~state 0
+      draw_cursor ~ctx ~bounds ~state 
+    end
+
+  let draw_highlight ~ctx ~bounds ~r b = 
+    if b then begin
+      for c=0 to bounds.Gfx.w - 1 do
+        inv ~ctx ~bounds ~r ~c
+      done
     end
 
   let draw_signals 
@@ -370,10 +389,12 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Signals" in
       let style = get_style style in
       fill ~ctx ~bounds ~style ' ';
-      draw_iter 0 bounds state
-        (fun bounds wave ->
+      draw_iter state.cfg.start_signal bounds state
+        (fun i bounds wave ->
           let _, wah = get_wave_height (state.cfg.wave_height, wave) in
-          draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.get_name wave))
+          let r = (wah-1) / 2 in
+          draw_string ~ctx ~style ~bounds ~r ~c:0 (W.get_name wave);
+          draw_highlight ~ctx ~bounds ~r (i = state.cfg.signal_cursor))
     end
 
   let draw_values 
@@ -384,20 +405,22 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       let bounds = draw_border ?border ~ctx ~bounds "Values" in
       let style = get_style style in
       fill ~ctx ~bounds ~style ' ';
-      draw_iter 0 bounds state
-        (fun bounds wave ->
+      let off = if state.cfg.wave_cursor < 0 then state.cfg.start_cycle else state.cfg.wave_cursor in
+      draw_iter state.cfg.start_signal bounds state
+        (fun i bounds wave ->
           let _, wah = get_wave_height (state.cfg.wave_height, wave) in
-          match wave with
+          let r = (wah-1) / 2 in
+          begin match wave with
           | Clock _ -> ()
           | Binary(_, d) ->
-            let off = state.cfg.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
-            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (W.to_bstr d)
+            draw_string ~ctx ~style ~bounds ~r ~c:0 (W.to_bstr d)
           | Data(_, d, _) ->
-            let off = state.cfg.wave_cycle in
             let d = try W.get d off with _ -> W.get d (W.length d - 1) in
             let to_str = W.get_to_str wave in
-            draw_string ~ctx ~style ~bounds ~r:((wah-1)/2) ~c:0 (to_str d))
+            draw_string ~ctx ~style ~bounds ~r ~c:0 (to_str d)
+          end;
+          draw_highlight ~ctx ~bounds ~r (i = state.cfg.signal_cursor))
     end
 
   let draw_status
@@ -410,8 +433,8 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       fill ~ctx ~bounds ~style ' ';
       draw_string ~ctx ~style ~bounds ~r:0 ~c:0 
         (Printf.sprintf 
-          "cycle=%i w=%i h=%i"
-          state.cfg.wave_cycle state.cfg.wave_width state.cfg.wave_height)
+          "cycle=%i cursor=%i w=%i h=%i"
+          state.cfg.start_cycle state.cfg.wave_cursor state.cfg.wave_width state.cfg.wave_height)
     end
 
   let draw_ui
@@ -432,6 +455,52 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     draw_values ~style:style.values ?border:style.border ~ctx ~bounds:bounds.values state;
     draw_wave ~style:style.waves ?border:style.border ~ctx ~bounds:bounds.waves state;
     draw_status ~style:style.status ?border:style.border ~ctx ~bounds:bounds.status state
+
+  type pick = 
+    | Wave of int * int
+    | Value of int
+    | Signal of int
+    | Status
+    | No_pick
+
+  let pick ?(border=true) ~bounds ~r ~c state = 
+    let open Gfx in
+    let open Bounds in
+    let in_rect b = r >= b.r && c >= b.c && r < (b.r + b.h) && c < (b.c + b.w) in
+    let get_signal_offset b = 
+      let r = r - b.r in
+      let rec f row i =
+        if i < Array.length state.W.waves then
+          let _, wah = get_wave_height (state.cfg.wave_height, state.waves.(i)) in
+          if r >= row && r < (row+wah) then i
+          else f (row+wah) (i+1)
+        else 
+          0 (* better default? *)
+      in 
+      f 0 state.cfg.start_signal
+    in
+    let get_wave_offset b = 
+      let c = c - b.c in
+      let w, waw = get_wave_width (state.cfg.wave_width, Clock "") in
+      let w_scale = get_w_scale w in
+      ((c / waw) * w_scale) + state.cfg.start_cycle
+    in
+    let bounds = (* yuk, maybe always draw border? *)
+      let shrink x = { r=x.r+1; c=x.c+1; w=x.w-1; h=x.h-1 } in
+      if border then
+          {
+            waves = shrink bounds.waves;
+            values = shrink bounds.values;
+            signals = shrink bounds.signals;
+            status = shrink bounds.status;
+          }
+        else bounds
+    in
+    if in_rect bounds.waves then Wave(get_wave_offset bounds.waves, get_signal_offset bounds.waves)
+    else if in_rect bounds.values then Value(get_signal_offset bounds.values)
+    else if in_rect bounds.signals then Signal(get_signal_offset bounds.signals)
+    else if in_rect bounds.status then Status
+    else No_pick
 
 end
 

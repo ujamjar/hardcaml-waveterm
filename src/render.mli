@@ -48,6 +48,9 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   (** max no of wave cycles *)
   val get_max_cycles : W.waves -> int
 
+  (** max no of wave cycles *)
+  val get_max_signals : W.waves -> int
+
   (** max width of wave window *)
   val get_max_wave_width : W.waves -> int
 
@@ -71,7 +74,7 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
     w:int -> h:int -> data:W.t -> off:int -> unit
 
   (** draw cursor *)
-  val draw_cursor : ctx:G.ctx -> bounds:Gfx.rect -> state:W.waves -> int -> unit
+  val draw_cursor : ctx:G.ctx -> bounds:Gfx.rect -> state:W.waves -> unit
 
   (** draw waveforms *)
   val draw_wave : 
@@ -96,6 +99,15 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val draw_ui :
     ?style:Styles.t -> ?bounds:Bounds.t -> 
     ctx:G.ctx -> W.waves -> unit 
+
+  type pick = 
+    | Wave of int * int
+    | Value of int
+    | Signal of int
+    | Status
+    | No_pick
+
+  val pick : ?border:bool -> bounds:Bounds.t -> r:int -> c:int -> W.waves -> pick
 
 end
 
