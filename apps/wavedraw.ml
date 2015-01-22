@@ -80,9 +80,11 @@ let gen name = begin
       output_string f, (fun () -> close_out f)
   in
   let waves = W.({ (get_waves name) with
-    wave_width = !width;
-    wave_height = !height;
-    wave_cycle = !start;
+    cfg = { 
+      wave_width = !width;
+      wave_height = !height;
+      wave_cycle = !start;
+    }
   }) in
   let style_fn = 
     match !styler with

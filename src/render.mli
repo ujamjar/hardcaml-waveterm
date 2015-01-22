@@ -6,6 +6,7 @@ module Styles : sig
       signals : Gfx.Style.t;
       values : Gfx.Style.t;
       waves : Gfx.Style.t;
+      status : Gfx.Style.t;
     }
 
   val default : Gfx.Style.t -> t
@@ -22,8 +23,11 @@ module Bounds : sig
       signals : Gfx.rect;
       values : Gfx.rect;
       waves : Gfx.rect;
+      status : Gfx.rect;
     }
-  val fit_to_window : ?signals:bool -> ?values:bool -> ?waves:bool -> Gfx.rect -> t
+  val fit_to_window : 
+    ?signals:bool -> ?values:bool -> ?waves:bool -> ?status:bool -> 
+    Gfx.rect -> t
 end
 
 (** Functions for drawing waves, signal names and values *)
@@ -66,6 +70,9 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> to_str:(W.elt -> string) -> 
     w:int -> h:int -> data:W.t -> off:int -> unit
 
+  (** draw cursor *)
+  val draw_cursor : ctx:G.ctx -> bounds:Gfx.rect -> state:W.waves -> int -> unit
+
   (** draw waveforms *)
   val draw_wave : 
     ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
@@ -78,6 +85,10 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
 
   (** draw signal values *)
   val draw_values : 
+    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
+    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+
+  val draw_status :
     ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
     ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
 

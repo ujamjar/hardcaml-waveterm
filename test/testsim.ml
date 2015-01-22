@@ -2,8 +2,10 @@
    written to the terminal.
 
    We use 'HardCamlWaveTerm.Sim.Make(B).wrap' to hook into the simulation 
-   and generate the waveform data and the standard Write.uft8 function to 
-   print it.
+   and generate the waveform data.
+   
+   When the sim has finished the Write.uft8 function prints the wave to stdout.
+   We also display the interactive UI.
 
    This flow might be useful in, for example, utop or iocaml notebooks.  
    Note that you can render multiple times and at any point during the 
@@ -48,13 +50,13 @@ let () =
     done;
   done
 
+let waves = W.({ cfg=default; waves })
+
 (* show data in terminal *)
 let () = 
   let open HardCamlWaveTerm in
   Write.(utf8 ~styler:term_styler print_string 
-    (R.(draw 
-      ~style:Render.Styles.colour_on_black ~cols:200
-      W.{ waves with wave_height=1; })))
+    (R.(draw ~style:Render.Styles.colour_on_black ~cols:200 waves)))
 
 (* show user interface *)
 lwt () = Ui.run waves

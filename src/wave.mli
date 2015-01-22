@@ -44,11 +44,18 @@ module type W = sig
   val get_data : wave -> t
   val get_to_str : wave -> (elt -> string)
 
-  type waves = 
+  type cfg = 
     {
       mutable wave_width : int; (** width of wave cycle *)
       mutable wave_height : int; (** height of wave cycle *)
       mutable wave_cycle : int; (** start cycle *)
+    }
+
+  val default : cfg
+
+  type waves = 
+    {
+      cfg : cfg; (** render config *)
       waves : wave array; (** data *)
     }
 

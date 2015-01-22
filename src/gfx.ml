@@ -67,6 +67,10 @@ module type Api = sig
     ctx:ctx -> style:style -> bounds:rect -> 
     char -> unit
 
+  val draw_int : 
+    ctx:ctx -> style:style -> bounds:rect ->
+    r:int -> c:int -> int -> unit
+
   val draw_piece : 
     ctx:ctx -> style:style -> bounds:rect ->
     r:int -> c:int -> piece -> unit
@@ -83,6 +87,12 @@ module type Api = sig
     ctx:ctx -> style:style -> bounds:rect ->
     string -> unit
 
+  val get : ctx:ctx -> bounds:rect -> r:int -> c:int -> int * Style.t
+
+  val inv : ctx:ctx -> bounds:rect -> r:int -> c:int -> unit
+
+  val bold : ctx:ctx -> bounds:rect -> r:int -> c:int -> unit
+
 end
 
 module type Brick = sig
@@ -94,13 +104,11 @@ module type Brick = sig
 
   val get_style : Style.t -> style
 
-  val draw_char : 
+  val draw_int : 
     ctx:ctx -> style:style -> bounds:rect ->
-    r:int -> c:int -> char -> unit
+    r:int -> c:int -> int -> unit
 
-  val draw_piece : 
-    ctx:ctx -> style:style -> bounds:rect ->
-    r:int -> c:int -> piece -> unit
+  val get : ctx:ctx -> bounds:rect -> r:int -> c:int -> int * Style.t
 
 end
 
@@ -108,9 +116,15 @@ module Build(B : Brick) = struct
 
   include B
 
+  let draw_char ~ctx ~style ~bounds ~r ~c ch = 
+    draw_int ~ctx ~style ~bounds ~r ~c (Char.code ch)
+
+  let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
+    draw_int ~ctx ~style ~bounds ~r ~c (unicode_of_piece piece)
+
   let fill ~ctx ~style ~bounds ch = 
-    for r=bounds.r to bounds.r + bounds.h - 1 do
-      for c=bounds.c to bounds.c + bounds.w - 1 do
+    for r=0 to bounds.h - 1 do
+      for c=0 to bounds.w - 1 do
         draw_char ~ctx ~style ~bounds ~r ~c ch 
       done;
     done
@@ -142,6 +156,19 @@ module Build(B : Brick) = struct
     for r=1 to (h-2) do draw_piece ~ctx ~style ~bounds ~r ~c:(w-1) V done;
     draw_string ~ctx ~style ~bounds:{bounds with w=w-1} ~r:0 ~c:1 label
 
+  let inv ~ctx ~bounds ~r ~c = 
+    try 
+      let x,s = get ~ctx ~bounds ~r ~c in
+      let style = get_style Style.{s with fg=s.bg; bg=s.fg} in
+      draw_int ~ctx ~style ~bounds ~r ~c x
+    with _ -> ()
+
+  let bold ~ctx ~bounds ~r ~c = 
+    try
+      let x,s = get ~ctx ~bounds ~r ~c in
+      let style = get_style Style.{s with bold=true} in
+      draw_int ~ctx ~style ~bounds ~r ~c x
+    with _ -> ()
 end
 
 module In_memory = struct
@@ -160,15 +187,16 @@ module In_memory = struct
 
     let get_style s = s
 
-    let draw_char ~ctx ~style ~bounds ~r ~c ch = 
-      if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
-        ctx.(bounds.r + r).(bounds.c + c) <- Char.code ch, style
+    let draw_int ~ctx ~style ~bounds ~r ~c i = 
+      if r >= 0 && r < bounds.h && c >= 0 && c < bounds.w then begin
+        ctx.(bounds.r + r).(bounds.c + c) <- i, style
       end
 
-    let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
-      if r >=0 && r < bounds.h && c >= 0 && c < bounds.w then begin
-        ctx.(bounds.r + r).(bounds.c + c) <- unicode_of_piece piece, style
-      end
+    let get ~ctx ~bounds ~r ~c = 
+      if r >= 0 && r < bounds.h && c >= 0 && c < bounds.w then begin
+        ctx.(bounds.r + r).(bounds.c + c)
+      end else
+        raise (Invalid_argument "Gfx.get: out of bounds")
 
   end
 

@@ -34,13 +34,6 @@ module Make(B : Comb.S)(W : Wave.W with type elt = B.t) = struct
     let waves = Array.of_list (List.map fst ports) in
     let updates = Array.of_list (List.map snd ports) in
 
-    let waves = W.({
-      wave_width = 3;
-      wave_height = 1;
-      wave_cycle = 0;
-      waves = waves;
-    }) in
-
     let tasks sim rst = List.concat [
       sim;
       [ fun () -> Array.iter (fun f -> f rst) updates; incr cycle ];

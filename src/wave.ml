@@ -139,12 +139,19 @@ module type W = sig
   val get_data : wave -> t
   val get_to_str : wave -> (elt -> string)
 
-  type waves = 
+  type cfg = 
     {
       mutable wave_width : int; (** width of wave cycle *)
       mutable wave_height : int; (** height of wave cycle *)
       mutable wave_cycle : int; (** start cycle *)
-      waves : wave array; (** data *)
+    }
+
+  val default : cfg
+
+  type waves = 
+    {
+      cfg : cfg;
+      waves : wave array; 
     }
 
   val write : out_channel -> waves -> unit
@@ -193,12 +200,24 @@ module Make(E : E) = struct
       | I s -> (fun elt -> try List.nth s (to_int elt) with _ -> "-")
     end
 
+  type cfg = 
+    {
+      mutable wave_width : int; 
+      mutable wave_height : int; 
+      mutable wave_cycle : int; 
+    }
+
+  let default = 
+    {
+      wave_width = 3;
+      wave_height = 1;
+      wave_cycle = 0;
+    }
+      
   type waves = 
     {
-      mutable wave_width : int; (** width of wave cycle *)
-      mutable wave_height : int; (** height of wave cycle *)
-      mutable wave_cycle : int; (** start cycle *)
-      waves : wave array; (** data *)
+      cfg : cfg;
+      waves : wave array; 
     }
 
   let write ch w = 

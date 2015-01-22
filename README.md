@@ -11,18 +11,18 @@ A text (unicode) based digital waveform viewer library.
 * [UTF-8 output](https://raw.githubusercontent.com/ujamjar/hardcaml-wave-term/master/test/wave.txt)
 
 ```
-$ wavedraw > test/wave.txt
+$ wavedraw -o test/wave.txt data.wave
 ```
 * [Basic HTML output](http://www.ujamjar.com/hardcaml/wave-term/wave-static.html)
 
 ```
-$ wavedraw -html static > test/wave-static.html 
+$ wavedraw -html static -o test/wave-static.html data.wave 
 ```
 
 * [Styled HTML output with scrolling](http://www.ujamjar.com/hardcaml/wave-term/wave-scroll.html)
 
 ```
-$ wavedraw -html static > test/wave-static.html 
+$ wavedraw -html scroll -o test/wave-scroll.html data.wave 
 ```
 
 # TODO
@@ -34,6 +34,8 @@ $ wavedraw -html static > test/wave-static.html
 * [x] configure data display
 * [x] split library for javascript mode (lambda-term deps in seperate package)
 * [x] sub cycle display (scaling factor < 1)
+* [ ] cursor display
+* [ ] pick; mouse coord -> wave cycle translation
 
 ## Interactive app
 
@@ -42,6 +44,7 @@ $ wavedraw -html static > test/wave-static.html
 * [ ] scroll names/values windows
 * [ ] resize sub-windows
 * [ ] interactive testbench driver mode (edit signal values, send back to simulation)
+* [ ] mouse interaction
 
 ## Static drawing
 

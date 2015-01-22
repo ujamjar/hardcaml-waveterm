@@ -60,6 +60,11 @@ module type Api = sig
     ctx:ctx -> style:style -> bounds:rect -> 
     char -> unit
 
+  (** draw int (representing unicode value) *)
+  val draw_int : 
+    ctx:ctx -> style:style -> bounds:rect ->
+    r:int -> c:int -> int -> unit
+
   (** draw piece *)
   val draw_piece : 
     ctx:ctx -> style:style -> bounds:rect ->
@@ -79,6 +84,15 @@ module type Api = sig
   val draw_box : 
     ctx:ctx -> style:style -> bounds:rect ->
     string -> unit
+  
+  (** get value and style at point *)
+  val get : ctx:ctx -> bounds:rect -> r:int -> c:int -> int * Style.t
+
+  (** invert fg and bg at point *)
+  val inv : ctx:ctx -> bounds:rect -> r:int -> c:int -> unit
+
+  (** set bold on point *)
+  val bold : ctx:ctx -> bounds:rect -> r:int -> c:int -> unit
 
 end
 
@@ -92,13 +106,11 @@ module type Brick = sig
 
   val get_style : Style.t -> style
 
-  val draw_char : 
+  val draw_int : 
     ctx:ctx -> style:style -> bounds:rect ->
-    r:int -> c:int -> char -> unit
+    r:int -> c:int -> int -> unit
 
-  val draw_piece : 
-    ctx:ctx -> style:style -> bounds:rect ->
-    r:int -> c:int -> piece -> unit
+  val get : ctx:ctx -> bounds:rect -> r:int -> c:int -> int * Style.t
 
 end
 

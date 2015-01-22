@@ -55,8 +55,10 @@ let testbench () =
     done;
   done
 
+let waves = W.{ cfg={default with wave_width=(-1)}; waves }
+
 lwt () = 
-  match_lwt Ui.run_testbench ~timeout:0.5 {waves with W.wave_width=(-1)} (testbench()) with
+  match_lwt Ui.run_testbench ~timeout:0.5 waves (testbench()) with
   | None -> Lwt_io.printf "Canceled!\n"
   | Some(x) -> Lwt_io.printf "OK!\n"
 
