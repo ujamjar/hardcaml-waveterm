@@ -42,7 +42,7 @@ let sim, waves = Ws.wrap sim
 
 (* wrap reset and cycle functions in Lwt *)
 let reset sim = Lwt.wrap1 Cs.reset sim
-let cycle sim = Lwt.wrap1 Cs.cycle sim >> Lwt_unix.sleep 0.1
+let cycle sim = lwt () = Lwt.wrap1 Cs.cycle sim in Lwt_unix.sleep 0.1
 
 let testbench () = 
   lwt () = reset sim in

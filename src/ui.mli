@@ -9,7 +9,7 @@ module Make (B : HardCaml.Comb.S)
 
   val init : 
     ?style:HardCamlWaveTerm.Render.Styles.t ->
-    W.waves -> (LTerm_ui.t * state) Lwt.t
+    W.waves -> (LTerm_ui.t * state * LTerm.t) Lwt.t
 
   (** Run wave viewer UI *)
   val run : 

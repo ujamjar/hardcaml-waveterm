@@ -155,13 +155,14 @@ module Make
     init_state term waves >>= fun state ->
     (* drawing functon *)
     LTerm_ui.create term (draw style state) >>= fun ui ->
-    Lwt.return (ui,state)
+    Lwt.return (ui,state,term)
 
   let run ?(style=sdef) ?timeout waves = 
-    init ~style waves >>= fun (ui,state) ->
+    init ~style waves >>= fun (ui,state,term) ->
     (try_lwt
       loop ?timeout (ui,state) 
     finally
+      LTerm.disable_mouse term >>
       LTerm_ui.quit ui)
 
   let run_testbench ?(style=sdef) ?timeout waves tb = 

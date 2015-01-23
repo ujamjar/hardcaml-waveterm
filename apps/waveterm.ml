@@ -9,11 +9,14 @@ $ " ^ Sys.argv.(0) ^ " [options] file
 Controls
 --------
 
-q/esc             Quit
-+/-               Scale wave width
-<shift> +/-       Scale wave height
-<arrows>          Scroll
-<shift> <arrows>  Scroll x 10
+q/esc               Quit
++/-                 Scale wave width
+<shift> +/-         Scale wave height
+<left>/<right>      Scroll wave (<shift> x 10)
+<up>/<down>         Scroll names and values
+
+<mouse button>      Set cursor
+<ctrl+mouse button> Scroll to wave
 "
 open Lwt
 open LTerm_geom
