@@ -1,0 +1,7 @@
+S src
+S apps
+S test
+B _build
+PKG hardcaml
+PKG lwt
+EXT lwt
