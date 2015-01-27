@@ -1,31 +1,21 @@
-EXT=byte
-LIBS = _build/HardCamlWaveTerm.cma _build/HardCamlWaveLTerm.cma \
-		   _build/HardCamlWaveTerm.cmxa _build/HardCamlWaveLTerm.cmxa 
-APPS = waveterm.$(EXT) wavedraw.$(EXT) testsim.$(EXT) testsim_lwt.$(EXT)
+.PHONY: all install uninstall clean
 
-.PHONY: all libs apps
+all: setup.data
+	ocaml setup.ml -build
 
-all: libs apps
+setup.ml:
+	oasis setup
 
-libs: 
-	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cma
-	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cma
-	ocamlbuild -use-ocamlfind HardCamlWaveTerm.cmxa
-	ocamlbuild -use-ocamlfind HardCamlWaveLTerm.cmxa
-
-apps:
-	ocamlbuild -use-ocamlfind $(APPS)
+setup.data: setup.ml
+	ocaml setup.ml -configure
 
 install:
-	ocamlfind install hardcaml-waveterm META \
-		_build/HardCamlWaveTerm.cmi _build/HardCamlWaveLTerm.cmi \
-		_build/HardCamlWaveTerm.a _build/HardCamlWaveLTerm.a \
-		$(LIBS)
+	ocaml setup.ml -install
 
 uninstall:
-	ocamlfind remove hardcaml-waveterm
+	ocaml setup.ml -uninstall
 
 clean:
-	ocamlbuild -clean
+	ocaml setup.ml -clean
 	find . -name "*~" | xargs rm -f
 
