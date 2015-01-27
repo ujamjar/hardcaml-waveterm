@@ -1,0 +1,22 @@
+# OASIS_START
+# DO NOT EDIT (digest: cc87e57084c66693ca0cc21138f857a7)
+version = "0.1"
+description = "A terminal based digital waveform viewer"
+requires = "hardcaml"
+archive(byte) = "HardCamlWaveTerm.cma"
+archive(byte, plugin) = "HardCamlWaveTerm.cma"
+archive(native) = "HardCamlWaveTerm.cmxa"
+archive(native, plugin) = "HardCamlWaveTerm.cmxs"
+exists_if = "HardCamlWaveTerm.cma"
+package "lterm" (
+ version = "0.1"
+ description = "A terminal based digital waveform viewer"
+ requires = "hardcaml hardcaml-waveterm lwt lambda-term"
+ archive(byte) = "HardCamlWaveLTerm.cma"
+ archive(byte, plugin) = "HardCamlWaveLTerm.cma"
+ archive(native) = "HardCamlWaveLTerm.cmxa"
+ archive(native, plugin) = "HardCamlWaveLTerm.cmxs"
+ exists_if = "HardCamlWaveLTerm.cma"
+)
+# OASIS_STOP
+

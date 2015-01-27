@@ -1,18 +1,77 @@
-<{src,test,apps}/*.{ml,mli}>: package(hardcaml)
-<src/{gfx,wave,render,write,sim}.cmx>: for-pack(HardCamlWaveTerm)
-
-<src/{gfx_lterm,ui}.{ml,mli}>: syntax(camlp4o), package(lambda-term,lwt,lwt.syntax)
-<src/{gfx_lterm,ui}.cmx>: for-pack(HardCamlWaveLTerm)
-
-<apps/waveterm.ml>: syntax(camlp4o), package(lwt.syntax,lambda-term)
-<apps/waveterm.{byte,native}>: package(lambda-term)
-
-<test/{testsim,testsim_lwt}.ml>: syntax(camlp4o), package(hardcaml.syntax,hardcaml,lwt,lwt.syntax)
-<test/{testsim_lwt,testsim}.{byte,native}>: package(lambda-term)
-
-<{apps,test}/*.{byte,native}>: package(hardcaml)
-
-<src>: include
-<test>: include
-<apps>: include
-true: debug
+# OASIS_START
+# DO NOT EDIT (digest: 3446930d9bcf9af6b4c16d272efd5a82)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+true: annot, bin_annot
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library HardCamlWaveTerm
+"src/HardCamlWaveTerm.cmxs": use_HardCamlWaveTerm
+"src/wave.cmx": for-pack(HardCamlWaveTerm)
+"src/gfx.cmx": for-pack(HardCamlWaveTerm)
+"src/render.cmx": for-pack(HardCamlWaveTerm)
+"src/write.cmx": for-pack(HardCamlWaveTerm)
+"src/sim.cmx": for-pack(HardCamlWaveTerm)
+<src/*.ml{,i,y}>: pkg_hardcaml
+# Library HardCamlWaveLTerm
+"lterm/HardCamlWaveLTerm.cmxs": use_HardCamlWaveLTerm
+"lterm/gfx_lterm.cmx": for-pack(HardCamlWaveLTerm)
+"lterm/ui.cmx": for-pack(HardCamlWaveLTerm)
+<lterm/*.ml{,i,y}>: pkg_hardcaml
+<lterm/*.ml{,i,y}>: pkg_lambda-term
+<lterm/*.ml{,i,y}>: pkg_lwt
+<lterm/*.ml{,i,y}>: pkg_lwt.syntax
+<lterm/*.ml{,i,y}>: use_HardCamlWaveTerm
+# Executable testsim
+<test/testsim.{native,byte}>: pkg_hardcaml
+<test/testsim.{native,byte}>: pkg_hardcaml.syntax
+<test/testsim.{native,byte}>: pkg_lambda-term
+<test/testsim.{native,byte}>: pkg_lwt
+<test/testsim.{native,byte}>: pkg_lwt.syntax
+<test/testsim.{native,byte}>: pkg_lwt.unix
+<test/testsim.{native,byte}>: use_HardCamlWaveTerm
+<test/testsim.{native,byte}>: custom
+# Executable testsim_lwt
+<test/testsim_lwt.{native,byte}>: pkg_hardcaml
+<test/testsim_lwt.{native,byte}>: pkg_hardcaml.syntax
+<test/testsim_lwt.{native,byte}>: pkg_lambda-term
+<test/testsim_lwt.{native,byte}>: pkg_lwt
+<test/testsim_lwt.{native,byte}>: pkg_lwt.syntax
+<test/testsim_lwt.{native,byte}>: pkg_lwt.unix
+<test/testsim_lwt.{native,byte}>: use_HardCamlWaveTerm
+<test/*.ml{,i,y}>: pkg_hardcaml
+<test/*.ml{,i,y}>: pkg_hardcaml.syntax
+<test/*.ml{,i,y}>: pkg_lambda-term
+<test/*.ml{,i,y}>: pkg_lwt
+<test/*.ml{,i,y}>: pkg_lwt.syntax
+<test/*.ml{,i,y}>: pkg_lwt.unix
+<test/*.ml{,i,y}>: use_HardCamlWaveTerm
+<test/testsim_lwt.{native,byte}>: custom
+# Executable wavedraw
+<apps/wavedraw.{native,byte}>: pkg_hardcaml
+<apps/wavedraw.{native,byte}>: use_HardCamlWaveTerm
+<apps/wavedraw.{native,byte}>: custom
+# Executable waveterm
+<apps/waveterm.{native,byte}>: pkg_hardcaml
+<apps/waveterm.{native,byte}>: pkg_lambda-term
+<apps/waveterm.{native,byte}>: pkg_lwt
+<apps/waveterm.{native,byte}>: pkg_lwt.syntax
+<apps/waveterm.{native,byte}>: use_HardCamlWaveLTerm
+<apps/waveterm.{native,byte}>: use_HardCamlWaveTerm
+<apps/*.ml{,i,y}>: pkg_hardcaml
+<apps/*.ml{,i,y}>: pkg_lambda-term
+<apps/*.ml{,i,y}>: pkg_lwt
+<apps/*.ml{,i,y}>: pkg_lwt.syntax
+<apps/*.ml{,i,y}>: use_HardCamlWaveLTerm
+<apps/*.ml{,i,y}>: use_HardCamlWaveTerm
+<apps/waveterm.{native,byte}>: custom
+# OASIS_STOP
