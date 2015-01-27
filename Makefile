@@ -9,7 +9,7 @@ setup.ml:
 setup.data: setup.ml
 	ocaml setup.ml -configure
 
-install:
+install: all
 	ocaml setup.ml -install
 
 uninstall:
