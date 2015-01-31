@@ -1,6 +1,6 @@
 opam-version: "0.1"
 maintainer: "andy.ray@ujamjar.com"
-homepage: "https://github.com/ujamjar/hardcaml-wave-term"
+homepage: "https://github.com/ujamjar/hardcaml-waveterm"
 build: [
   [make "all"]
   [make "install"]
