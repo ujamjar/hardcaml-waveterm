@@ -9,10 +9,7 @@ remove: [
   [make "uninstall"]
 ]
 depends: [
-  "ocamlfind"
-  "base-bytes"
-  "camlp4"
-  "js_of_ocaml"
-  "ctypes"
+  "hardcaml"
+  "lambda-term"
 ]
 ocaml-version: [ >= "4.01.0" ]
