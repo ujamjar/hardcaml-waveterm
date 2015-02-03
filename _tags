@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3446930d9bcf9af6b4c16d272efd5a82)
+# DO NOT EDIT (digest: 9fd7370ba953d40a4cd33108a83232a0)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -26,6 +26,7 @@ true: annot, bin_annot
 "lterm/HardCamlWaveLTerm.cmxs": use_HardCamlWaveLTerm
 "lterm/gfx_lterm.cmx": for-pack(HardCamlWaveLTerm)
 "lterm/ui.cmx": for-pack(HardCamlWaveLTerm)
+"lterm/api.cmx": for-pack(HardCamlWaveLTerm)
 <lterm/*.ml{,i,y}>: pkg_hardcaml
 <lterm/*.ml{,i,y}>: pkg_lambda-term
 <lterm/*.ml{,i,y}>: pkg_lwt
