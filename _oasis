@@ -5,7 +5,7 @@ Synopsis:    A terminal based digital waveform viewer
 Description: A terminal based digital waveform viewer
 
 Authors:     Andy Ray
-Maintainers: Andy Ray <andy.ray@unjamjar.org>
+Maintainers: Andy Ray <andy.ray@ujamjar.org>
 Homepage:    https://github.com/ujamjar/hardcaml-wave-term
 License:     ISC
 Plugins:     META (0.4)
