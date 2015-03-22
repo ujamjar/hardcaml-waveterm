@@ -36,7 +36,7 @@ module Bits(B : HardCaml.Comb.S) = struct
     in
     let blen = B.width b in
     let slen = (blen + 3) / 4 in
-    String.init slen (fun i ->
+    Bytes.init slen (fun i ->
       let i = slen - i - 1 in
       let l = i*4 in
       let h = (min blen (l+4)) - 1 in

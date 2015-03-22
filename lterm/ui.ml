@@ -101,7 +101,7 @@ module Make
 
       (* terminal resize *)
       | LTerm_event.Resize size ->
-        let bounds = Gfx.{r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows} in
+        let bounds = Gfx.({r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows}) in
         state.bounds <- Render.Bounds.fit_to_window ~status:show_status bounds;
         draw_loop ()
 
@@ -135,7 +135,7 @@ module Make
 
   let init_state term waves = 
     let size = LTerm.size term in
-    let bounds = Gfx.{r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows} in
+    let bounds = Gfx.({r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows}) in
     let bounds = Render.Bounds.fit_to_window ~status:show_status bounds in
     Lwt.return
       {

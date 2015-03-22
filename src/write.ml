@@ -111,13 +111,13 @@ let utf8 ?(styler=no_styler) os ctx =
   let open Gfx in
   let open In_memory in
   let put c = 
-    if c <= 0x7f then begin os (String.init 1 (fun _ -> Char.chr c))
+    if c <= 0x7f then begin os (Bytes.init 1 (fun _ -> Char.chr c))
     end else if c <= 0x7FF then begin
-      os (String.init 2 (function
+      os (Bytes.init 2 (function
         | 0 -> Char.chr ((c lsr 6) lor 0b11000000)
         | _ -> Char.chr ((c land 0b00111111) lor 0b10000000)))
     end else if c <= 0xFFFF then begin
-      os (String.init 3 (function
+      os (Bytes.init 3 (function
         | 0 -> Char.chr ((c lsr 12) lor 0b11100000)
         | 1 -> Char.chr (((c lsr 6) land 0b00111111) lor 0b10000000)
         | _ -> Char.chr ((c land 0b00111111) lor 0b10000000)))

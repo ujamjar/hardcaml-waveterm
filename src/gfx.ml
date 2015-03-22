@@ -159,14 +159,14 @@ module Build(B : Brick) = struct
   let inv ~ctx ~bounds ~r ~c = 
     try 
       let x,s = get ~ctx ~bounds ~r ~c in
-      let style = get_style Style.{s with fg=s.bg; bg=s.fg} in
+      let style = get_style Style.({s with fg=s.bg; bg=s.fg}) in
       draw_int ~ctx ~style ~bounds ~r ~c x
     with _ -> ()
 
   let bold ~ctx ~bounds ~r ~c = 
     try
       let x,s = get ~ctx ~bounds ~r ~c in
-      let style = get_style Style.{s with bold=true} in
+      let style = get_style Style.({s with bold=true}) in
       draw_int ~ctx ~style ~bounds ~r ~c x
     with _ -> ()
 end
