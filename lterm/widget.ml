@@ -184,21 +184,22 @@ module Make
       in
 
       match ev with
+
+      (* cursor *)
       | LTerm_event.Mouse({button=Button1; control=false} as m) 
         when in_rect alloc (coord m) -> 
         pick m (fun cycle signal -> state.W.cfg.W.wave_cursor <- cycle)
+
+      (* move to cycle *)
       | LTerm_event.Mouse({button=Button1; control=true} as m) 
         when in_rect alloc (coord m) -> 
         pick m (fun cycle signal -> scroll#hscroll#set_offset cycle)
 
+      (* mouse wheel *)
       | LTerm_event.Mouse {button=Button5; control} ->
           (if control then scroll#hscroll#incr else scroll#vscroll#incr); true
       | LTerm_event.Mouse {button=Button4; control} ->
           (if control then scroll#hscroll#decr else scroll#vscroll#decr); true
-      | LTerm_event.Mouse {button=Button7} ->
-          scroll#hscroll#incr; true
-      | LTerm_event.Mouse {button=Button6} ->
-          scroll#hscroll#decr; true
 
       (* vertical scale *)
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '+' ->
