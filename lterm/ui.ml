@@ -68,17 +68,17 @@ module Make
       | LTerm_event.Key{ code = End } ->
         waves.cfg.start_cycle <- R.get_max_cycles waves - 1;
         draw_loop ()
-      | LTerm_event.Key{ code = Left; shift = true } ->
+      | LTerm_event.Key{ code = Left; shift = true; control = false; meta = false } ->
         waves.cfg.start_cycle <- max 0 (waves.cfg.start_cycle - 10);
         draw_loop ()
-      | LTerm_event.Key{ code = Left } ->
+      | LTerm_event.Key{ code = Left; shift = false; control = false; meta = false } ->
         waves.cfg.start_cycle <- max 0 (waves.cfg.start_cycle - 1);
         draw_loop ()
-      | LTerm_event.Key{ code = Right; shift = true } ->
+      | LTerm_event.Key{ code = Right; shift = true; control = false; meta = false } ->
         waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
                                      (waves.cfg.start_cycle + 10);
         draw_loop ()
-      | LTerm_event.Key{ code = Right } ->
+      | LTerm_event.Key{ code = Right; shift = false; control = false; meta = false } ->
         waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
                                      (waves.cfg.start_cycle + 1);
         draw_loop ()
@@ -97,6 +97,21 @@ module Make
       | LTerm_event.Key{ code = Down } ->
         waves.cfg.start_signal <- min (R.get_max_signals waves - 1) 
                                       (waves.cfg.start_signal + 1);
+        draw_loop ()
+
+      (* signal/value window scroll *)
+      | LTerm_event.Key{ code = Left; shift = false; control = true; meta = false } ->
+        waves.cfg.signal_scroll <- max 0 (waves.cfg.signal_scroll - 1);
+        draw_loop ()
+      | LTerm_event.Key{ code = Right; shift = false; control = true; meta = false } ->
+        waves.cfg.signal_scroll <- waves.cfg.signal_scroll + 1;
+        draw_loop ()
+
+      | LTerm_event.Key{ code = Left; shift = false; control = false; meta = true } ->
+        waves.cfg.value_scroll <- max 0 (waves.cfg.value_scroll - 1);
+        draw_loop ()
+      | LTerm_event.Key{ code = Right; shift = false; control = false; meta = true } ->
+        waves.cfg.value_scroll <- waves.cfg.value_scroll + 1;
         draw_loop ()
 
       (* terminal resize *)

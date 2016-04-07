@@ -147,6 +147,8 @@ module type W = sig
       mutable start_signal : int; 
       mutable wave_cursor : int;
       mutable signal_cursor : int;
+      mutable signal_scroll : int;
+      mutable value_scroll : int;
     }
 
   val default : cfg
@@ -211,6 +213,8 @@ module Make(E : E) = struct
       mutable start_signal : int; 
       mutable wave_cursor : int;
       mutable signal_cursor : int;
+      mutable signal_scroll : int;
+      mutable value_scroll : int;
     }
 
   let default = 
@@ -221,6 +225,8 @@ module Make(E : E) = struct
       start_signal = 0;
       wave_cursor = -1;
       signal_cursor = -1;
+      signal_scroll = 0;
+      value_scroll = 0;
     }
       
   type waves = 
@@ -245,6 +251,38 @@ module Make(E : E) = struct
     Marshal.to_channel ch w []
 
   let read ch = (Marshal.from_channel ch : waves)
+(*
+  let rle d = 
+    List.rev @@ Array.fold_left 
+      (fun acc x ->
+        match acc with
+        | [] -> [1,x]
+        | (n,y)::t -> 
+          if E.compare x y then ((n+1,y)::t) else (1,x)::(n,y)::t)
+      [] d
 
+  (* XXX need a way to pack the elements *)
+
+  let write_chunk ch w ~ofs ~size = 
+    (* extract the chunk *)
+    let w = 
+      let init d = Array.init size (fun j -> Array.get d (j+ofs)) in
+      { w with waves = Array.map 
+        (function
+          | Clock(n) -> Clock(n)
+          | Binary(n, d) ->
+            Binary(n, { d with data=init d.data; })
+          | Data(n, d, ts) -> 
+            let ts = match ts with F _ -> B | _ -> ts in (* cant marshal functions *)
+            Data(n, { d with data=init d.data; }, ts)) 
+          w.waves
+        }
+    in 
+    (* now compress the chunk *)
+    w
+*)
 end
+
+
+
 

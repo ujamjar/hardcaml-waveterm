@@ -1,7 +1,9 @@
 S src
 S apps
 S test
-B _build
+B _build/**
+PKG lambda-term
 PKG hardcaml
+PKG hardcaml-waveterm
 PKG lwt
 EXT lwt

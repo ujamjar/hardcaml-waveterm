@@ -24,7 +24,7 @@ Library HardCamlWaveLTerm
   Findlibname:   lterm
   FindlibParent: HardCamlWaveTerm
   Pack:          true
-  Modules:       Gfx_lterm, Ui, Api
+  Modules:       Gfx_lterm, Widget, Ui, Api
   BuildDepends:  lwt.syntax, hardcaml, hardcaml-waveterm, lwt, lambda-term
   XMETARequires: hardcaml, hardcaml-waveterm, lwt, lambda-term
 
@@ -69,6 +69,14 @@ Executable wavedraw
 Executable waveterm
   Path:               apps
   MainIs:             waveterm.ml
+  Custom:             true
+  CompiledObject:     best
+  Install:            false
+  BuildDepends:       hardcaml-waveterm.lterm
+
+Executable testwidget
+  Path:               test
+  MainIs:             testwidget.ml
   Custom:             true
   CompiledObject:     best
   Install:            false

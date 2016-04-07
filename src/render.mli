@@ -25,9 +25,11 @@ module Bounds : sig
       waves : Gfx.rect;
       status : Gfx.rect;
     }
+  val expand_for_border : Gfx.rect -> Gfx.rect
+  val shrink_for_border : Gfx.rect -> Gfx.rect
   val fit_to_window : 
     ?signals:bool -> ?values:bool -> ?waves:bool -> ?status:bool -> 
-    Gfx.rect -> t
+    ?border:bool -> Gfx.rect -> t
 end
 
 (** Functions for drawing waves, signal names and values *)
@@ -55,7 +57,7 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val get_max_wave_width : W.waves -> int
 
   (** max height of wave window *)
-  val get_max_wave_height : W.waves -> int
+  val get_max_wave_height : W.waves -> int -> int
 
   (** draws one clock cycle *)
   val draw_clock_cycle : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> 
@@ -73,27 +75,23 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> to_str:(W.elt -> string) -> 
     w:int -> h:int -> data:W.t -> off:int -> unit
 
+  type draw_item = ?style:Gfx.Style.t -> ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+
+  val with_border : draw:draw_item -> label:string -> ?border:Gfx.Style.t -> draw_item
+
   (** draw cursor *)
   val draw_cursor : ctx:G.ctx -> bounds:Gfx.rect -> state:W.waves -> unit
 
   (** draw waveforms *)
-  val draw_wave : 
-    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  val draw_wave : draw_item
   
   (** draw signal names *)
-  val draw_signals : 
-    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  val draw_signals : draw_item
 
   (** draw signal values *)
-  val draw_values : 
-    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  val draw_values : draw_item
 
-  val draw_status :
-    ?style:Gfx.Style.t -> ?border:Gfx.Style.t ->
-    ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  val draw_status : draw_item
 
   (** draw standard user inferface (names, values, waveforms left to right *)
   val draw_ui :
@@ -107,7 +105,7 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
     | Status
     | No_pick
 
-  val pick : ?border:bool -> bounds:Bounds.t -> r:int -> c:int -> W.waves -> pick
+  val pick : bounds:Bounds.t -> r:int -> c:int -> W.waves -> pick
 
 end
 

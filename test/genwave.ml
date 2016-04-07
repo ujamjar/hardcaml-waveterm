@@ -1,5 +1,5 @@
 (* $ utop "test/genwave.ml" *)
-#directory "_build"
+#directory "_build/src"
 #require "hardcaml"
 #load "HardCamlWaveTerm.cma"
 
@@ -52,6 +52,24 @@ let wave_data_render =
     |];
   })
 
+let wave_name = 
+  W.({
+    cfg = default;
+    waves = [|
+      W.Clock "clock";
+      W.Data("aaaa_bbbb_cccc_dd", rand cycles 22, W.B);
+      W.Data("aaaa_bbbb_cccc_ddd", rand cycles 19, W.B);
+      W.Data("aaaa_bbbb_cccc_dddd", rand cycles 18, W.B);
+      W.Data("aaaa_bbbb_cccc_dddd_eeee_ffff", rand cycles 17, W.B);
+    |];
+  })
+
+let wave_big = 
+  W.({
+    cfg = default;
+    waves = Array.init 100 (fun i -> W.Data("s"^string_of_int i, rand 1000 (Random.int 50 + 1), W.B));
+  })
+
 let write_wave n w = 
   let f = open_out n in
   W.write f w;
@@ -59,4 +77,6 @@ let write_wave n w =
 
 let () = write_wave "test/toggle.wave" wave_toggle
 let () = write_wave "test/data-render.wave" wave_data_render
+let () = write_wave "test/name.wave" wave_name
+let () = write_wave "test/big.wave" wave_big
 

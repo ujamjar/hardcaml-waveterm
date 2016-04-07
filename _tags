@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 9fd7370ba953d40a4cd33108a83232a0)
+# DO NOT EDIT (digest: fd79acd10e936ebd70a8d8f5f2ead8c7)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -25,6 +25,7 @@ true: annot, bin_annot
 # Library HardCamlWaveLTerm
 "lterm/HardCamlWaveLTerm.cmxs": use_HardCamlWaveLTerm
 "lterm/gfx_lterm.cmx": for-pack(HardCamlWaveLTerm)
+"lterm/widget.cmx": for-pack(HardCamlWaveLTerm)
 "lterm/ui.cmx": for-pack(HardCamlWaveLTerm)
 "lterm/api.cmx": for-pack(HardCamlWaveLTerm)
 <lterm/*.ml{,i,y}>: pkg_hardcaml
@@ -49,13 +50,8 @@ true: annot, bin_annot
 <test/testsim_lwt.{native,byte}>: pkg_lwt.syntax
 <test/testsim_lwt.{native,byte}>: pkg_lwt.unix
 <test/testsim_lwt.{native,byte}>: use_HardCamlWaveTerm
-<test/*.ml{,i,y}>: pkg_hardcaml
 <test/*.ml{,i,y}>: pkg_hardcaml.syntax
-<test/*.ml{,i,y}>: pkg_lambda-term
-<test/*.ml{,i,y}>: pkg_lwt
-<test/*.ml{,i,y}>: pkg_lwt.syntax
 <test/*.ml{,i,y}>: pkg_lwt.unix
-<test/*.ml{,i,y}>: use_HardCamlWaveTerm
 <test/testsim_lwt.{native,byte}>: custom
 # Executable wavedraw
 <apps/wavedraw.{native,byte}>: pkg_hardcaml
@@ -75,4 +71,18 @@ true: annot, bin_annot
 <apps/*.ml{,i,y}>: use_HardCamlWaveLTerm
 <apps/*.ml{,i,y}>: use_HardCamlWaveTerm
 <apps/waveterm.{native,byte}>: custom
+# Executable testwidget
+<test/testwidget.{native,byte}>: pkg_hardcaml
+<test/testwidget.{native,byte}>: pkg_lambda-term
+<test/testwidget.{native,byte}>: pkg_lwt
+<test/testwidget.{native,byte}>: pkg_lwt.syntax
+<test/testwidget.{native,byte}>: use_HardCamlWaveLTerm
+<test/testwidget.{native,byte}>: use_HardCamlWaveTerm
+<test/*.ml{,i,y}>: pkg_hardcaml
+<test/*.ml{,i,y}>: pkg_lambda-term
+<test/*.ml{,i,y}>: pkg_lwt
+<test/*.ml{,i,y}>: pkg_lwt.syntax
+<test/*.ml{,i,y}>: use_HardCamlWaveLTerm
+<test/*.ml{,i,y}>: use_HardCamlWaveTerm
+<test/testwidget.{native,byte}>: custom
 # OASIS_STOP

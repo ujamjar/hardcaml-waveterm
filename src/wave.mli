@@ -52,6 +52,8 @@ module type W = sig
       mutable start_signal : int; (** start signal *)
       mutable wave_cursor : int; (** waveform cursor *)
       mutable signal_cursor : int; (** signal cursor *)
+      mutable signal_scroll : int;
+      mutable value_scroll : int;
     }
 
   val default : cfg
