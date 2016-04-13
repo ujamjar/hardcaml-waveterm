@@ -362,16 +362,20 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     let style = get_style border in
     G.draw_box ~ctx ~style ~bounds label
 
-  type draw_item = ?style:Gfx.Style.t -> ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  type 'a draw_item = ?style:Gfx.Style.t -> ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> 'a
 
   let with_border 
-    ~(draw:draw_item) ~label ?border 
-    ?(style=Gfx.Style.default) ~ctx ~bounds state = 
-    draw ~style ~ctx ~bounds state;
+    : draw:'a draw_item -> label:string -> ?border:Gfx.Style.t -> 'a draw_item
+    = fun
+    ~(draw:'a draw_item) ~label ?border 
+    ?(style=Gfx.Style.default) ~ctx ~bounds state ->
+    let r = draw ~style ~ctx ~bounds state in
     match border with
     | Some(border) when bounds.Gfx.w>0 && bounds.Gfx.h>0 ->
-      G.draw_box ~ctx ~style:(get_style border) ~bounds:(Bounds.expand_for_border bounds) label
-    | _ -> ()
+      G.draw_box ~ctx ~style:(get_style border) ~bounds:(Bounds.expand_for_border bounds) label;
+      r
+    | _ -> 
+      r
 
   let draw_cursor ~ctx ~bounds ~state = 
     let open Gfx in
@@ -451,6 +455,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     let style = get_style style in
     fill ~ctx ~bounds ~style ' ';
     let off = if state.cfg.wave_cursor < 0 then state.cfg.start_cycle else state.cfg.wave_cursor in
+    let max_string_length = ref 0 in
     draw_iter state.cfg.start_signal bounds state
       (fun i bounds wave ->
         let _, wah = get_wave_height (state.cfg.wave_height, wave) in
@@ -459,13 +464,18 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
         | Clock _ -> ()
         | Binary(_, d) ->
           let d = try W.get d off with _ -> W.get d (W.length d - 1) in
-          draw_scroll_string_right ~ctx ~style ~bounds ~r ~c:state.cfg.value_scroll (W.to_bstr d)
+          let str = W.to_bstr d in
+          max_string_length := max !max_string_length (String.length str);
+          draw_scroll_string_right ~ctx ~style ~bounds ~r ~c:state.cfg.value_scroll str
         | Data(_, d, _) ->
           let d = try W.get d off with _ -> W.get d (W.length d - 1) in
           let to_str = W.get_to_str wave in
-          draw_scroll_string_right ~ctx ~style ~bounds ~r ~c:state.cfg.value_scroll (to_str d)
+          let str = to_str d in
+          max_string_length := max !max_string_length (String.length str);
+          draw_scroll_string_right ~ctx ~style ~bounds ~r ~c:state.cfg.value_scroll str
         end;
-        draw_highlight ~ctx ~bounds ~r (i = state.cfg.signal_cursor))
+        draw_highlight ~ctx ~bounds ~r (i = state.cfg.signal_cursor));
+    !max_string_length
 
   let draw_status ?(style=Gfx.Style.default) ~ctx ~bounds state = 
     let open Gfx in
@@ -491,7 +501,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
 
     with_border ~draw:draw_signals ~label:"Signals" 
       ~style:style.signals ?border:style.border ~ctx ~bounds:bounds.signals state;
-    with_border ~draw:draw_values ~label:"Values" 
+    ignore @@ with_border ~draw:draw_values ~label:"Values" 
       ~style:style.values ?border:style.border ~ctx ~bounds:bounds.values state;
     with_border ~draw:draw_wave ~label:"Waves" 
       ~style:style.waves ?border:style.border ~ctx ~bounds:bounds.waves state;
@@ -578,7 +588,7 @@ module Static(W : Wave.W) = struct
       ~style:style.signals ~ctx:sctx ~bounds:b state;
 
     let b, vctx = get_ctx bounds.values in
-    R.with_border ~draw:R.draw_values 
+    ignore @@ R.with_border ~draw:R.draw_values 
       ?border:style.border ~label:"Values"
       ~style:style.values ~ctx:vctx ~bounds:b state;
 

@@ -75,23 +75,23 @@ module Make (G : Gfx.Api) (W : Wave.W) : sig
   val draw_data : ctx:G.ctx -> style:G.style -> bounds:Gfx.rect -> to_str:(W.elt -> string) -> 
     w:int -> h:int -> data:W.t -> off:int -> unit
 
-  type draw_item = ?style:Gfx.Style.t -> ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> unit
+  type 'a draw_item = ?style:Gfx.Style.t -> ctx:G.ctx -> bounds:Gfx.rect -> W.waves -> 'a
 
-  val with_border : draw:draw_item -> label:string -> ?border:Gfx.Style.t -> draw_item
+  val with_border : draw:'a draw_item -> label:string -> ?border:Gfx.Style.t -> 'a draw_item
 
   (** draw cursor *)
   val draw_cursor : ctx:G.ctx -> bounds:Gfx.rect -> state:W.waves -> unit
 
   (** draw waveforms *)
-  val draw_wave : draw_item
+  val draw_wave : unit draw_item
   
   (** draw signal names *)
-  val draw_signals : draw_item
+  val draw_signals : unit draw_item
 
   (** draw signal values *)
-  val draw_values : draw_item
+  val draw_values : int draw_item
 
-  val draw_status : draw_item
+  val draw_status : unit draw_item
 
   (** draw standard user inferface (names, values, waveforms left to right *)
   val draw_ui :

@@ -48,87 +48,18 @@ module Make
 
   end
 
-  let draw ~draw ~label ?style ~ctx ?border ~focused state = 
+  let draw ~draw ?style ~ctx ?border ~focused state = 
     let { rows; cols } = LTerm_draw.size ctx in
-    let bounds = (*Render.Bounds.shrink_for_border*) { Gfx.r=0; c=0; w=cols; h=rows } in
-    (*let border = 
-      match border with
-      | None -> Gfx.Style.default
-      | Some(x) -> x
-    in
-    let border = { border with Gfx.Style.bold = focused } in*)
-    (*R.with_border ~*)draw (*~label*) ?style ~ctx ~bounds (*~border*) state
-
-  class signals cols state = object(self)
-    inherit t "signals" as super
-    inherit default_scrollable_document as scroll
-
-    method can_focus = true 
-
-    val max_signal_width = R.get_max_signal_width state 
-    val max_signals = R.get_max_signals state
-
-    method size_request = { rows=0; cols }
-
-    method document_size = { rows=0; cols=max_signal_width }
-    method page_size = size_of_rect self#allocation 
-
-    method set_allocation r = 
-      super#set_allocation r;
-      scroll#set_document_size self#document_size;
-      scroll#set_page_size self#page_size
-
-    val mutable style = colour_on_black
-
-    val mutable vscroll = 0
-    method set_vscroll o = vscroll <- o
-
-    method draw ctx focused = 
-      let focused = focused = (self :> t) in
-      state.W.cfg.W.signal_scroll <- scroll#hscroll#offset;
-      state.W.cfg.W.start_signal <- vscroll;
-      draw ~draw:R.draw_signals ~label:"Signals" 
-        ~style:style.signals ~ctx ?border:style.border ~focused state
-
-  end
-
-  class values cols state = object(self)
-    inherit t "values" as super
-    inherit default_scrollable_document as scroll
-
-    method can_focus = true
-
-    val max_value_width = R.get_max_value_width state (* XXX potentially slow... *)
-    val max_signals = R.get_max_signals state
-
-    method size_request = { rows=0; cols }
-
-    method document_size = { rows=0; cols=max_value_width }
-    method page_size = size_of_rect self#allocation 
-
-    method set_allocation r = 
-      super#set_allocation r;
-      scroll#set_document_size self#document_size;
-      scroll#set_page_size self#page_size;
-      scroll#hscroll#set_offset (scroll#hscroll#range-1)
-
-    val mutable style = colour_on_black
-
-    val mutable vscroll = 0
-    method set_vscroll o = vscroll <- o
-
-    method draw ctx focused = 
-      let focused = focused = (self :> t) in
-      state.W.cfg.W.value_scroll <- scroll#hscroll#range - scroll#hscroll#offset - 1;
-      state.W.cfg.W.start_signal <- vscroll;
-      draw ~draw:R.draw_values ~label:"Values" 
-        ~style:style.values ~ctx ?border:style.border ~focused state
-
-  end
+    let bounds = { Gfx.r=0; c=0; w=cols; h=rows } in
+    draw ?style ~ctx ~bounds state
 
   class waves state = object(self)
     inherit t "waves" as super
-    inherit default_scrollable_document as scroll
+
+    val hscroll = new scrollable
+    val vscroll = new scrollable
+    method hscroll = hscroll
+    method vscroll = vscroll
 
     method can_focus = true
 
@@ -159,10 +90,12 @@ module Make
 
     method set_allocation r = 
       super#set_allocation r;
-      scroll#set_document_size self#document_size;
-      scroll#set_page_size self#page_size
+      hscroll#set_document_size self#document_size.cols;
+      vscroll#set_document_size self#document_size.rows;
+      hscroll#set_page_size self#page_size.cols;
+      vscroll#set_page_size self#page_size.rows
 
-    initializer self#on_event @@ fun ev ->
+    method private pick_event ev = 
       let open LTerm_mouse in
       let open LTerm_key in
 
@@ -193,43 +126,145 @@ module Make
       (* move to cycle *)
       | LTerm_event.Mouse({button=Button1; control=true} as m) 
         when in_rect alloc (coord m) -> 
-        pick m (fun cycle signal -> scroll#hscroll#set_offset cycle)
+        pick m (fun cycle signal -> hscroll#set_offset cycle)
 
+      | _ -> false
+
+    method wheel_event (hscroll : scrollable) ev = 
+      let open LTerm_mouse in
+      match ev with
       (* mouse wheel *)
       | LTerm_event.Mouse {button=Button5; control} ->
-          (if control then scroll#hscroll#incr else scroll#vscroll#incr); true
+          (if control then hscroll#set_offset hscroll#incr 
+           else vscroll#set_offset vscroll#incr); true
       | LTerm_event.Mouse {button=Button4; control} ->
-          (if control then scroll#hscroll#decr else scroll#vscroll#decr); true
+          (if control then hscroll#set_offset hscroll#decr 
+           else vscroll#set_offset vscroll#decr); true
 
+      | _ -> false
+
+    method scale_event = function
       (* vertical scale *)
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '+' ->
         state.W.cfg.W.wave_height <- state.W.cfg.W.wave_height + 1;
-        scroll#set_page_size self#page_size;
+        let page_size = self#page_size in
+        hscroll#set_page_size page_size.cols;
+        vscroll#set_page_size page_size.rows;
         self#queue_draw; true
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '_' ->
         state.W.cfg.W.wave_height <- max 0 (state.W.cfg.W.wave_height - 1);
-        scroll#set_page_size self#page_size;
+        let page_size = self#page_size in
+        hscroll#set_page_size page_size.cols;
+        vscroll#set_page_size page_size.rows;
         self#queue_draw; true
 
       (* Horizontal scale *)
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '-' ->
         state.W.cfg.W.wave_width <- state.W.cfg.W.wave_width - 1;
-        scroll#set_page_size self#page_size;
+        let page_size = self#page_size in
+        hscroll#set_page_size page_size.cols;
+        vscroll#set_page_size page_size.rows;
         self#queue_draw; true
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '=' ->
         state.W.cfg.W.wave_width <- state.W.cfg.W.wave_width + 1;
-        scroll#set_page_size self#page_size;
+        let page_size = self#page_size in
+        hscroll#set_page_size page_size.cols;
+        vscroll#set_page_size page_size.rows;
         self#queue_draw; true
 
       | _ -> false
 
+    initializer self#on_event @@ fun ev -> 
+      self#pick_event ev || 
+      self#wheel_event hscroll ev || 
+      self#scale_event ev
+      
+    initializer vscroll#add_scroll_event_handler (self#wheel_event hscroll)
+    initializer hscroll#add_scroll_event_handler (self#wheel_event hscroll)
+
     method draw ctx focused = 
       let focused = focused = (self :> t) in
-      state.W.cfg.W.start_cycle <- scroll#hscroll#offset;
-      state.W.cfg.W.start_signal <- scroll#vscroll#offset;
-      draw ~draw:R.draw_wave ~label:"Waves" 
+      state.W.cfg.W.start_cycle <- hscroll#offset;
+      state.W.cfg.W.start_signal <- vscroll#offset;
+      draw ~draw:R.draw_wave 
         ~style:style.waves ~ctx ?border:style.border ~focused state
   
+  end
+
+  class signals cols state wave = object(self)
+    inherit t "signals" as super
+
+    val vscroll = wave#vscroll
+    val hscroll = new scrollable
+    method hscroll = hscroll
+
+    method can_focus = true 
+
+    val max_signal_width = R.get_max_signal_width state 
+    val max_signals = R.get_max_signals state
+
+    method size_request = { rows=0; cols }
+
+    method set_allocation r = 
+      super#set_allocation r;
+      hscroll#set_document_size max_signal_width;
+      hscroll#set_page_size (size_of_rect r).cols
+
+    val mutable style = colour_on_black
+
+    method draw ctx focused = 
+      let focused = focused = (self :> t) in
+      state.W.cfg.W.signal_scroll <- hscroll#offset;
+      state.W.cfg.W.start_signal <- vscroll#offset;
+      draw ~draw:R.draw_signals 
+        ~style:style.signals ~ctx ?border:style.border ~focused state
+
+    initializer self#on_event (fun ev -> wave#wheel_event hscroll ev || wave#scale_event ev)
+    initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
+
+  end
+
+  class values cols state wave = object(self)
+    inherit t "values" as super
+
+    val vscroll = wave#vscroll
+    val hscroll = new scrollable
+    method hscroll = hscroll
+
+    method can_focus = true
+
+    val mutable max_value_width = 0
+    val max_signals = R.get_max_signals state
+
+    method private set_max_value_width w = 
+      if w > max_value_width then begin
+        let diff = w - max_value_width in
+        max_value_width <- w;
+        hscroll#set_document_size max_value_width;
+        hscroll#set_offset (hscroll#offset + diff);
+      end
+
+    method size_request = { rows=0; cols }
+
+    method set_allocation r = 
+      super#set_allocation r;
+      hscroll#set_page_size (size_of_rect r).cols;
+      self#set_max_value_width (size_of_rect r).cols;
+      hscroll#set_offset 0
+
+    val mutable style = colour_on_black
+
+    method draw ctx focused = 
+      let focused = focused = (self :> t) in
+      state.W.cfg.W.value_scroll <- hscroll#range - hscroll#offset - 1;
+      state.W.cfg.W.start_signal <- vscroll#offset;
+      self#set_max_value_width @@
+        draw ~draw:R.draw_values 
+          ~style:style.values ~ctx ?border:style.border ~focused state
+
+    initializer self#on_event (fun ev -> wave#wheel_event hscroll ev || wave#scale_event ev)
+    initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
+
   end
 
   class status state = object(self)
@@ -243,33 +278,18 @@ module Make
 
     method draw ctx focused = 
       let focused = focused = (self :> t) in
-      draw ~draw:R.draw_status ~label:"Status" 
+      draw ~draw:R.draw_status 
         ~style:style.waves ~ctx ?border:style.border ~focused state
   
   end
 
-  let add_scroll widget = 
-    let vbox = new vbox in
-    let bl, br = new button ~brackets:("","") "<", new button ~brackets:("", "") ">" in
-    let hbox = new hbox in
-    let hscroll = new hscrollbar ~height:1 () in
-    let widget = widget hscroll in
-    bl#on_click (fun () -> hscroll#set_offset (hscroll#offset-1));
-    br#on_click (fun () -> hscroll#set_offset (hscroll#offset+1));
-    hbox#add ~expand:false bl;
-    hbox#add hscroll; 
-    hbox#add ~expand:false br;
-    vbox#add ~expand:true widget;
-    vbox#add ~expand:false hbox;
-    vbox
-
-  let add_wscroll name widget = 
+  let add_scroll name widget = 
     let vbox = new vbox in
     let frame = new frame in
     frame#set_label name;
     let bl, br = new buttonx "<", new buttonx ">" in
     let hbox = new hbox in
-    let hscroll = new hscrollbar_for_document ~height:1 widget in
+    let hscroll = new hscrollbar ~height:1 widget#hscroll in
     frame#set widget;
     bl#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset-1));
     br#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset+1));
@@ -280,57 +300,38 @@ module Make
     vbox#add ~expand:false hbox;
     vbox
 
-  let make ?(signal_width=20) ?(value_width=20) waves = 
-    
-    let signal' = new signals 20 waves in
-    let value' = new values 20 waves in
+  class waveform waves = 
     let wave' = new waves waves in
+    let signal' = new signals 20 waves wave' in
+    let value' = new values 20 waves wave' in
 
-    let signal = add_wscroll "Signals" signal' in
-    let value = add_wscroll "Values" value' in
-    let wave = add_wscroll "Waves" wave' in
+    let signal = add_scroll "Signals" signal' in
+    let value = add_scroll "Values" value' in
+    let wave = add_scroll "Waves" wave' in
 
-    let status = new status waves in
-
-    let vscroll = new vscrollbar_for_document ~width:1 wave' in
-    wave'#vscroll#on_offset_change signal'#set_vscroll;
-    wave'#vscroll#on_offset_change value'#set_vscroll;
+    let vscroll = new vscrollbar ~width:1 wave'#vscroll in
     let bu, bd = new buttonx "^", new buttonx "v" in
     let vbox = new vbox in
-    bu#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset-1));
-    bd#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset+1));
-    vbox#add ~expand:false bu;
-    vbox#add ~expand:true vscroll;
-    vbox#add ~expand:false bd;
-    vbox#add ~expand:false (new spacing ~rows:1 ~cols:1 ());
+    let () = bu#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset-1)) in
+    let () = bd#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset+1)) in
+    let () = vbox#add ~expand:false bu in
+    let () = vbox#add ~expand:true vscroll in
+    let () = vbox#add ~expand:false bd in
+    let () = vbox#add ~expand:false (new spacing ~rows:1 ~cols:1 ()) in
 
-    let hbox = new hbox in
-    hbox#add ~expand:false signal;
-    hbox#add ~expand:false value;
-    hbox#add ~expand:true wave;
-    hbox#add ~expand:false vbox;
-
-    let vbox = new vbox in
-    vbox#add hbox;
-    let frame = new frame in
-    frame#set status;
-    frame#set_label "Status";
-    vbox#add ~expand:false frame;
-
-    let debug_label = new label "foo" in
-    ignore (Lwt_engine.on_timer 0.1 true (fun _ -> debug_label#set_text @@
-      Printf.sprintf "scroll [%i/%i] window [%ix%i] doc=[%ix%i] page=[%ix%i]" 
-        wave'#vscroll#offset wave'#vscroll#range
-        (size_of_rect wave'#allocation).rows
-        (size_of_rect wave'#allocation).cols
-        wave'#document_size.rows
-        wave'#document_size.cols
-        wave'#page_size.rows
-        wave'#page_size.cols
-    ));
-    vbox#add ~expand:false debug_label;
-
-    vbox
+  object(self)
+    inherit hbox as hbox
+    initializer
+      hbox#add ~expand:false signal;
+      hbox#add ~expand:false value;
+      hbox#add ~expand:true wave;
+      hbox#add ~expand:false vbox
+    
+    method waves = wave'
+    method signals = signal'
+    method values = value'
+  
+  end
 
 end
 

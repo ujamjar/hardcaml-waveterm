@@ -4,6 +4,5 @@ S test
 B _build/**
 PKG lambda-term
 PKG hardcaml
-PKG hardcaml-waveterm
 PKG lwt
 EXT lwt

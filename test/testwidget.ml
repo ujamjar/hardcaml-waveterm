@@ -17,8 +17,31 @@ let main () =
   let waves = get_waves Sys.argv.(1) in
 
   let vbox = new vbox in
-  let waveform = Widget.make waves in
+  let waveform = new Widget.waveform waves in
   vbox#add waveform;
+
+  (* add status window *)
+  let status = new Widget.status waves in
+  let frame = new frame in
+  frame#set status;
+  frame#set_label "Status";
+  vbox#add ~expand:false frame;
+
+  (* debug *)
+  let debug_label = new label "foo" in
+  ignore (Lwt_engine.on_timer 0.1 true (fun _ -> debug_label#set_text @@
+    Printf.sprintf "scroll [%i/%i] window [%ix%i] doc=[%ix%i] page=[%ix%i]" 
+      waveform#waves#vscroll#offset waveform#waves#vscroll#range
+      LTerm_geom.((size_of_rect waveform#waves#allocation).rows)
+      LTerm_geom.((size_of_rect waveform#waves#allocation).cols)
+      waveform#waves#document_size.LTerm_geom.rows
+      waveform#waves#document_size.LTerm_geom.cols
+      waveform#waves#page_size.LTerm_geom.rows
+      waveform#waves#page_size.LTerm_geom.cols
+  ));
+  
+  vbox#add ~expand:false debug_label;
+
   let button = new button "exit" in
   button#on_click (wakeup wakener);
   vbox#add ~expand:false button;
