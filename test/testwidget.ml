@@ -17,11 +17,13 @@ let main () =
   let waves = get_waves Sys.argv.(1) in
 
   let vbox = new vbox in
-  let waveform = new Widget.waveform waves in
+  let waveform = new Widget.waveform () in
+  waveform#set_waves waves;
   vbox#add waveform;
 
   (* add status window *)
-  let status = new Widget.status waves in
+  let status = new Widget.status in
+  status#set_waves waves;
   let frame = new frame in
   frame#set status;
   frame#set_label "Status";

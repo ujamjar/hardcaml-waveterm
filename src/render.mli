@@ -1,7 +1,6 @@
 module Styles : sig
   type t =
     {
-      style : Gfx.Style.t;
       border : Gfx.Style.t option;
       signals : Gfx.Style.t;
       values : Gfx.Style.t;

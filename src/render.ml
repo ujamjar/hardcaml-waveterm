@@ -1,7 +1,6 @@
 module Styles = struct
   type t =
     {
-      style : Gfx.Style.t;
       border : Gfx.Style.t option;
       signals : Gfx.Style.t;
       values : Gfx.Style.t;
@@ -9,7 +8,7 @@ module Styles = struct
       status : Gfx.Style.t;
     }
   let default d = 
-    { style = d; border = Some(d); signals = d; values = d; waves = d; status = d }
+    { border = Some(d); signals = d; values = d; waves = d; status = d }
   let white_on_black = default Gfx.Style.({ default with fg=White; bg=Black })
   let black_on_white = default Gfx.Style.({ default with fg=Black; bg=White })
   let colour s = 

@@ -15,46 +15,47 @@ module Make
   module G = Gfx_lterm.Api
   module R = Render.Make(G)(W)
 
-  
-  class buttonx text = object(self)
-    inherit button text as button
+  module Resources = struct
 
-    method size_request = 
-      let b = button#size_request in
-      { b with cols = b.cols-4 } (* hack; undo the extra chars around button *)
+    open LTerm_resources
+    open LTerm_style
+    open Gfx.Style
 
-    (* has to be copied from the button class *)
-    val mutable focused_style = LTerm_style.none
-    val mutable unfocused_style = LTerm_style.none
-    method update_resources =
-      let rc = self#resource_class and resources = self#resources in
-      focused_style <- LTerm_resources.get_style (rc ^ ".focused") resources;
-      unfocused_style <- LTerm_resources.get_style (rc ^ ".unfocused") resources
+    let get_colour k r = 
+      match String.lowercase (get k r) with
+      | "black" -> Some Black
+      | "red" -> Some Red
+      | "green" -> Some Green
+      | "yellow" -> Some Yellow
+      | "blue" -> Some Blue
+      | "magenta" -> Some Magenta
+      | "cyan" -> Some Cyan
+      | "White" -> Some White
+      | _ -> None
 
-    method private apply_style ctx focused =
-      let style =
-        if focused = (self :> t)
-        then focused_style
-        else unfocused_style
-      in
-      LTerm_draw.fill_style ctx style
-
-    (* draw naked button *)
-    method draw ctx focused =
-      let { rows; cols } = LTerm_draw.size ctx in
-      let len = Zed_utf8.length button#label in
-      self#apply_style ctx focused;
-      LTerm_draw.draw_string ctx (rows / 2) ((cols - len) / 2) button#label
+    let get_style k r = 
+      let fg = get_colour (k ^ ".foreground") r in
+      let bg = get_colour (k ^ ".background") r in 
+      let bold = get_bool (k ^ ".bold") r in
+      match fg, bg, bold with
+      | None,None,None -> { fg=White; bg=Black; bold=false }
+      | _ ->
+        let fg = match fg with Some(c) -> c | None -> White in
+        let bg = match bg with Some(c) -> c | None -> Black in
+        let bold = match bold with Some(b) -> b | None -> false in
+        { fg; bg; bold }
 
   end
+  
+  let no_state = W.{ cfg=default; waves=[||] }
 
   let draw ~draw ?style ~ctx ?border ~focused state = 
     let { rows; cols } = LTerm_draw.size ctx in
     let bounds = { Gfx.r=0; c=0; w=cols; h=rows } in
     draw ?style ~ctx ~bounds state
 
-  class waves state = object(self)
-    inherit t "waves" as super
+  class waves = object(self)
+    inherit t "waveform.waves" as super
 
     val hscroll = new scrollable
     val vscroll = new scrollable
@@ -65,10 +66,14 @@ module Make
 
     method size_request = {rows=0; cols=0}
 
-    val mutable style = colour_on_black
+    val mutable style = { white_on_black with border = None }
+    method update_resources = 
+      let rc = self#resource_class and resources = self#resources in
+      style <- { style with waves = Resources.get_style rc resources; }
 
-    val max_cycles = R.get_max_cycles state + 1
-    val max_signals = R.get_max_signals state
+    val mutable max_cycles = 0
+    val mutable max_signals = 0
+    val mutable state = W.{ cfg=default; waves=[||] }
 
     method document_size = { rows=max_signals; cols=max_cycles }
 
@@ -90,6 +95,15 @@ module Make
 
     method set_allocation r = 
       super#set_allocation r;
+      hscroll#set_document_size self#document_size.cols;
+      vscroll#set_document_size self#document_size.rows;
+      hscroll#set_page_size self#page_size.cols;
+      vscroll#set_page_size self#page_size.rows
+
+    method set_waves waves = 
+      state <- waves;
+      max_cycles <- R.get_max_cycles state + 1;
+      max_signals <- R.get_max_signals state;
       hscroll#set_document_size self#document_size.cols;
       vscroll#set_document_size self#document_size.rows;
       hscroll#set_page_size self#page_size.cols;
@@ -191,8 +205,8 @@ module Make
   
   end
 
-  class signals cols state wave = object(self)
-    inherit t "signals" as super
+  class signals cols wave = object(self)
+    inherit t "waveform.signals" as super
 
     val vscroll = wave#vscroll
     val hscroll = new scrollable
@@ -200,17 +214,30 @@ module Make
 
     method can_focus = true 
 
-    val max_signal_width = R.get_max_signal_width state 
-    val max_signals = R.get_max_signals state
+    val mutable max_signal_width = 0
+    val mutable max_signals = 0
+    val mutable state = W.{ cfg=default; waves=[||] }
 
     method size_request = { rows=0; cols }
 
+    val mutable size = { cols=0; rows=0 }
     method set_allocation r = 
+      size <- size_of_rect r;
       super#set_allocation r;
       hscroll#set_document_size max_signal_width;
-      hscroll#set_page_size (size_of_rect r).cols
+      hscroll#set_page_size size.cols
 
-    val mutable style = colour_on_black
+    method set_waves waves = 
+      state <- waves;
+      max_signal_width <- R.get_max_signal_width state;
+      max_signals <- R.get_max_signals state;
+      hscroll#set_document_size max_signal_width;
+      hscroll#set_page_size size.cols
+
+    val mutable style = { white_on_black with border = None }
+    method update_resources = 
+      let rc = self#resource_class and resources = self#resources in
+      style <- { style with signals = Resources.get_style rc resources; }
 
     method draw ctx focused = 
       let focused = focused = (self :> t) in
@@ -224,8 +251,8 @@ module Make
 
   end
 
-  class values cols state wave = object(self)
-    inherit t "values" as super
+  class values cols wave = object(self)
+    inherit t "waveform.values" as super
 
     val vscroll = wave#vscroll
     val hscroll = new scrollable
@@ -234,7 +261,8 @@ module Make
     method can_focus = true
 
     val mutable max_value_width = 0
-    val max_signals = R.get_max_signals state
+    val mutable max_signals = 0
+    val mutable state = W.{ cfg=default; waves=[||] }
 
     method private set_max_value_width w = 
       if w > max_value_width then begin
@@ -246,13 +274,26 @@ module Make
 
     method size_request = { rows=0; cols }
 
+    val mutable size = { cols=0; rows=0 }
     method set_allocation r = 
+      size <- size_of_rect r;
       super#set_allocation r;
-      hscroll#set_page_size (size_of_rect r).cols;
-      self#set_max_value_width (size_of_rect r).cols;
+      hscroll#set_page_size size.cols;
+      self#set_max_value_width size.cols;
       hscroll#set_offset 0
 
-    val mutable style = colour_on_black
+    method set_waves waves = 
+      state <- waves;
+      max_value_width <- 0;
+      max_signals <- R.get_max_signals state;
+      hscroll#set_page_size size.cols;
+      self#set_max_value_width size.cols;
+      hscroll#set_offset 0
+
+    val mutable style = { white_on_black with border = None }
+    method update_resources = 
+      let rc = self#resource_class and resources = self#resources in
+      style <- { style with values = Resources.get_style rc resources; }
 
     method draw ctx focused = 
       let focused = focused = (self :> t) in
@@ -267,27 +308,35 @@ module Make
 
   end
 
-  class status state = object(self)
-    inherit t "status"
+  class status = object(self)
+    inherit t "waveform.status"
 
     method can_focus = false
 
     method size_request = {rows=1; cols=0}
 
-    val mutable style = colour_on_black
+    val mutable style = { white_on_black with border = None }
+    method update_resources = 
+      let rc = self#resource_class and resources = self#resources in
+      style <- { style with status = Resources.get_style rc resources; }
+
+    val mutable state = W.{ cfg=default; waves=[||] }
+    method set_waves wave = state <- wave
 
     method draw ctx focused = 
       let focused = focused = (self :> t) in
       draw ~draw:R.draw_status 
-        ~style:style.waves ~ctx ?border:style.border ~focused state
+        ~style:style.status ~ctx ?border:style.border ~focused state
   
   end
+
+  let button txt = new button ~brackets:("","") txt 
 
   let add_scroll name widget = 
     let vbox = new vbox in
     let frame = new frame in
     frame#set_label name;
-    let bl, br = new buttonx "<", new buttonx ">" in
+    let bl, br = button "<", button ">" in
     let hbox = new hbox in
     let hscroll = new hscrollbar ~height:1 widget#hscroll in
     frame#set widget;
@@ -300,17 +349,17 @@ module Make
     vbox#add ~expand:false hbox;
     vbox
 
-  class waveform waves = 
-    let wave' = new waves waves in
-    let signal' = new signals 20 waves wave' in
-    let value' = new values 20 waves wave' in
+  class waveform ?(signals_width=20) ?(values_width=20) () = 
+    let wave' = new waves in
+    let signal' = new signals signals_width wave' in
+    let value' = new values values_width wave' in
 
     let signal = add_scroll "Signals" signal' in
     let value = add_scroll "Values" value' in
     let wave = add_scroll "Waves" wave' in
 
     let vscroll = new vscrollbar ~width:1 wave'#vscroll in
-    let bu, bd = new buttonx "^", new buttonx "v" in
+    let bu, bd = button "^", button "v" in
     let vbox = new vbox in
     let () = bu#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset-1)) in
     let () = bd#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset+1)) in
@@ -319,20 +368,29 @@ module Make
     let () = vbox#add ~expand:false bd in
     let () = vbox#add ~expand:false (new spacing ~rows:1 ~cols:1 ()) in
 
-  object(self)
-    inherit hbox as hbox
-    initializer
-      hbox#add ~expand:false signal;
-      hbox#add ~expand:false value;
-      hbox#add ~expand:true wave;
-      hbox#add ~expand:false vbox
-    
-    method waves = wave'
-    method signals = signal'
-    method values = value'
-  
-  end
+    object(self)
+      inherit hbox as hbox
+      initializer
+        hbox#add ~expand:false signal;
+        hbox#add ~expand:false value;
+        hbox#add ~expand:true wave;
+        hbox#add ~expand:false vbox
+ 
+      val mutable state = no_state 
+
+      method waves = wave'
+      method signals = signal'
+      method values = value'
+ 
+      method set_waves ?(keep_cfg=false) waves = 
+        state <- 
+          (if keep_cfg then W.{ waves with cfg = state.cfg }
+          else waves);
+        wave'#set_waves state;
+        signal'#set_waves state;
+        value'#set_waves state
+
+    end
 
 end
-
 
