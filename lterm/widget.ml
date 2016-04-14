@@ -95,19 +95,28 @@ module Make
 
     method set_allocation r = 
       super#set_allocation r;
-      hscroll#set_document_size self#document_size.cols;
-      vscroll#set_document_size self#document_size.rows;
-      hscroll#set_page_size self#page_size.cols;
-      vscroll#set_page_size self#page_size.rows
+      hscroll#set_document_size max_cycles;
+      vscroll#set_document_size max_signals;
+      let page_size = self#page_size in
+      hscroll#set_page_size page_size.cols;
+      vscroll#set_page_size page_size.rows
 
     method set_waves waves = 
       state <- waves;
       max_cycles <- R.get_max_cycles state + 1;
       max_signals <- R.get_max_signals state;
-      hscroll#set_document_size self#document_size.cols;
-      vscroll#set_document_size self#document_size.rows;
-      hscroll#set_page_size self#page_size.cols;
-      vscroll#set_page_size self#page_size.rows
+      hscroll#set_document_size max_cycles;
+      vscroll#set_document_size max_signals;
+      let page_size = self#page_size in
+      hscroll#set_page_size page_size.cols;
+      vscroll#set_page_size page_size.rows
+
+    method update_wave_cycles = 
+      let cycles = R.get_max_cycles state + 1 in
+      if cycles <> max_cycles then begin
+        max_cycles <- cycles;
+        hscroll#set_document_size max_cycles
+      end
 
     method private pick_event ev = 
       let open LTerm_mouse in
@@ -157,6 +166,25 @@ module Make
 
       | _ -> false
 
+    method key_scroll_event (hscroll : scrollable) = function
+      | LTerm_event.Key{code = Up;    shift=true; control=false} -> 
+          vscroll#set_offset vscroll#decr; self#queue_draw; true
+      | LTerm_event.Key{code = Down;  shift=true; control=false} -> 
+          vscroll#set_offset vscroll#incr; self#queue_draw; true
+      | LTerm_event.Key{code = Left;  shift=true; control=false} -> 
+          hscroll#set_offset hscroll#decr; self#queue_draw; true
+      | LTerm_event.Key{code = Right; shift=true; control=false} -> 
+          hscroll#set_offset hscroll#incr; self#queue_draw; true
+      | LTerm_event.Key{code = Up;    shift=false; control=true} -> 
+          vscroll#set_offset (vscroll#offset-1); self#queue_draw; true
+      | LTerm_event.Key{code = Down;  shift=false; control=true} -> 
+          vscroll#set_offset (vscroll#offset+1); self#queue_draw; true
+      | LTerm_event.Key{code = Left;  shift=false; control=true} -> 
+          hscroll#set_offset (hscroll#offset-1); self#queue_draw; true
+      | LTerm_event.Key{code = Right; shift=false; control=true} -> 
+          hscroll#set_offset (hscroll#offset+1); self#queue_draw; true
+      | _ -> false
+
     method scale_event = function
       (* vertical scale *)
       | LTerm_event.Key{ code = Char c } when UChar.char_of c = '+' ->
@@ -189,9 +217,10 @@ module Make
       | _ -> false
 
     initializer self#on_event @@ fun ev -> 
-      self#pick_event ev || 
       self#wheel_event hscroll ev || 
-      self#scale_event ev
+      self#key_scroll_event hscroll ev ||
+      self#scale_event ev ||
+      self#pick_event ev
       
     initializer vscroll#add_scroll_event_handler (self#wheel_event hscroll)
     initializer hscroll#add_scroll_event_handler (self#wheel_event hscroll)
@@ -246,7 +275,10 @@ module Make
       draw ~draw:R.draw_signals 
         ~style:style.signals ~ctx ?border:style.border ~focused state
 
-    initializer self#on_event (fun ev -> wave#wheel_event hscroll ev || wave#scale_event ev)
+    initializer self#on_event 
+      (fun ev -> wave#wheel_event hscroll ev || 
+                 wave#key_scroll_event hscroll ev || 
+                 wave#scale_event ev)
     initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
 
   end
@@ -303,7 +335,10 @@ module Make
         draw ~draw:R.draw_values 
           ~style:style.values ~ctx ?border:style.border ~focused state
 
-    initializer self#on_event (fun ev -> wave#wheel_event hscroll ev || wave#scale_event ev)
+    initializer self#on_event 
+      (fun ev -> wave#wheel_event hscroll ev || 
+                 wave#key_scroll_event hscroll ev || 
+                 wave#scale_event ev)
     initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
 
   end
@@ -390,7 +425,33 @@ module Make
         signal'#set_waves state;
         value'#set_waves state
 
+      method update_wave_cycles = wave'#update_wave_cycles
+
     end
+
+  (* run the user interface. *)
+  let run ?exit (widget : #t) = 
+    let waiter, wakener = 
+      match exit with 
+      | None -> wait ()
+      | Some(a,b) -> a,b
+    in
+    widget#on_event (function 
+      LTerm_event.Key{LTerm_key.code=LTerm_key.Escape} -> 
+        wakeup wakener (); false | _ -> false);
+    Lazy.force LTerm.stdout >>= fun term ->
+    LTerm.enable_mouse term >>= fun () ->
+    Lwt.finalize 
+      (fun () -> LTerm_widget.run term widget waiter)
+      (fun () -> LTerm.disable_mouse term)
+
+  let run_testbench ?exit (widget : #t) tb = 
+    let ui = run ?exit widget in
+    try_lwt
+      lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
+      Lwt.return (Some tb)
+    with Lwt.Canceled ->
+      Lwt.return None
 
 end
 

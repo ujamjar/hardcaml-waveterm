@@ -48,15 +48,7 @@ let main () =
   button#on_click (wakeup wakener);
   vbox#add ~expand:false button;
 
-  vbox#on_event (function 
-    LTerm_event.Key{LTerm_key.code=LTerm_key.Escape} -> 
-      wakeup wakener (); false | _ -> false);
-
-  Lazy.force LTerm.stdout >>= fun term ->
-  LTerm.enable_mouse term >>= fun () ->
-  Lwt.finalize 
-    (fun () -> run term vbox waiter)
-    (fun () -> LTerm.disable_mouse term)
+  Widget.run ~exit:(waiter,wakener) vbox
 
 let () = Lwt_main.run (main ())
 

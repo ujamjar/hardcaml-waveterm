@@ -37,7 +37,7 @@ let f i =
 
 module G = Interface.Gen(I)(O)
 
-let circ,sim,i,o = G.make "test" f
+let circ,sim,i,o,_ = G.make "test" f
 let sim, waves = Ws.wrap sim
 
 (* wrap reset and cycle functions in Lwt *)

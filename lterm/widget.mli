@@ -12,9 +12,11 @@ module Make
     method hscroll : LTerm_widget.scrollable
     method vscroll : LTerm_widget.scrollable
     method document_size : LTerm_geom.size
+    method update_wave_cycles : unit
     method page_size : LTerm_geom.size
     method wheel_event : LTerm_widget.scrollable -> LTerm_event.t -> bool
     method scale_event : LTerm_event.t -> bool
+    method key_scroll_event : LTerm_widget.scrollable -> LTerm_event.t -> bool
   end
 
   class signals : int -> waves -> object
@@ -40,7 +42,14 @@ module Make
     method values : values
     method signals : signals
     method set_waves : ?keep_cfg:bool -> W.waves -> unit
+    method update_wave_cycles : unit
   end
 
+  val run : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> unit Lwt.t
+
+  val run_testbench : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> 
+    'a Lwt.t -> 'a option Lwt.t
+
 end
+
 

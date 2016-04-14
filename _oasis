@@ -82,6 +82,15 @@ Executable testwidget
   Install:            false
   BuildDepends:       hardcaml-waveterm.lterm
 
+Executable testwidget_lwt
+  Path:               test
+  MainIs:             testwidget_lwt.ml
+  Build$:             flag(simtests) 
+  Custom:             true
+  CompiledObject:     best
+  Install:            false
+  BuildDepends:       hardcaml-waveterm, lwt.syntax, lwt, hardcaml, hardcaml.syntax, lambda-term, lwt.unix
+
 SourceRepository master
   Type:     git
   Location: https://github.com/ujamjar/hardcaml-wave-term.git
