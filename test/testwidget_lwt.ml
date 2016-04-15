@@ -58,7 +58,7 @@ let main () =
     lwt r = testbench () and () = update_loop () in
     Lwt.return r
   in
-  Widget.run_testbench waveform run
+  Widget.run_widget_testbench waveform run
 
 let () = 
   match Lwt_main.run (main ()) with

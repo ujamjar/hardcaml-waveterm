@@ -45,10 +45,14 @@ module Make
     method update_wave_cycles : unit
   end
 
-  val run : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> unit Lwt.t
+  val run_widget : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> unit Lwt.t
 
-  val run_testbench : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> 
+  val run_widget_testbench : ?exit:(unit Lwt.t * unit Lwt.u) -> #LTerm_widget.t -> 
     'a Lwt.t -> 'a option Lwt.t
+
+  val run : W.waves -> unit Lwt.t
+
+  val run_testbench : W.waves -> 'a Lwt.t -> 'a option Lwt.t
 
 end
 

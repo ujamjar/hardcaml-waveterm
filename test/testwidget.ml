@@ -48,7 +48,7 @@ let main () =
   button#on_click (wakeup wakener);
   vbox#add ~expand:false button;
 
-  Widget.run ~exit:(waiter,wakener) vbox
+  Widget.run_widget ~exit:(waiter,wakener) vbox
 
 let () = Lwt_main.run (main ())
 

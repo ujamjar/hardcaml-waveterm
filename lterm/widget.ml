@@ -430,7 +430,7 @@ module Make
     end
 
   (* run the user interface. *)
-  let run ?exit (widget : #t) = 
+  let run_widget ?exit (widget : #t) = 
     let waiter, wakener = 
       match exit with 
       | None -> wait ()
@@ -445,13 +445,23 @@ module Make
       (fun () -> LTerm_widget.run term widget waiter)
       (fun () -> LTerm.disable_mouse term)
 
-  let run_testbench ?exit (widget : #t) tb = 
-    let ui = run ?exit widget in
+  let run_widget_testbench ?exit (widget : #t) tb = 
+    let ui = run_widget ?exit widget in
     try_lwt
       lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
       Lwt.return (Some tb)
     with Lwt.Canceled ->
       Lwt.return None
+
+  let run waves = 
+    let waveform = new waveform () in
+    waveform#set_waves waves;
+    run_widget waveform
+
+  let run_testbench waves tb = 
+    let waveform = new waveform () in
+    waveform#set_waves waves;
+    run_widget_testbench waveform tb
 
 end
 
