@@ -234,7 +234,7 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
     let open Gfx in
     let w_scale, w = w, max 0 w in
     let rec f prev c i = 
-      if c >= bounds.w then ()
+      if (c >= bounds.w) || (get_data_index off i w_scale >= W.length data) then ()
       else 
         let cur = get_data data off i w_scale in
         let low() = 
