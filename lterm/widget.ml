@@ -222,9 +222,6 @@ module Make
       self#scale_event ev ||
       self#pick_event ev
       
-    initializer vscroll#add_scroll_event_handler (self#wheel_event hscroll)
-    initializer hscroll#add_scroll_event_handler (self#wheel_event hscroll)
-
     method draw ctx focused = 
       let focused = focused = (self :> t) in
       state.W.cfg.W.start_cycle <- hscroll#offset;
@@ -279,7 +276,6 @@ module Make
       (fun ev -> wave#wheel_event hscroll ev || 
                  wave#key_scroll_event hscroll ev || 
                  wave#scale_event ev)
-    initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
 
   end
 
@@ -339,7 +335,6 @@ module Make
       (fun ev -> wave#wheel_event hscroll ev || 
                  wave#key_scroll_event hscroll ev || 
                  wave#scale_event ev)
-    initializer hscroll#add_scroll_event_handler (wave#wheel_event hscroll)
 
   end
 
@@ -367,13 +362,14 @@ module Make
 
   let button txt = new button ~brackets:("","") txt 
 
-  let add_scroll name widget = 
+  let add_scroll name wheel widget = 
     let vbox = new vbox in
     let frame = new frame in
     frame#set_label name;
     let bl, br = button "<", button ">" in
     let hbox = new hbox in
     let hscroll = new hscrollbar ~height:1 widget#hscroll in
+    hscroll#on_event (wheel widget#hscroll);
     frame#set widget;
     bl#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset-1));
     br#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset+1));
@@ -385,6 +381,66 @@ module Make
     vbox
 
   class waveform ?(signals_width=20) ?(values_width=20) () = 
+    let wave' = new waves in
+    let signal' = new signals signals_width wave' in
+    let value' = new values values_width wave' in
+
+    let signal = add_scroll "Signals" wave'#wheel_event signal' in
+    let value = add_scroll "Values" wave'#wheel_event value' in
+    let wave = add_scroll "Waves" wave'#wheel_event wave' in
+
+    let vscroll = new vscrollbar ~width:1 wave'#vscroll in
+    let () = vscroll#on_event (wave'#wheel_event wave'#hscroll) in
+    let bu, bd = button "^", button "v" in
+    let vbox = new vbox in
+    let () = bu#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset-1)) in
+    let () = bd#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset+1)) in
+    let () = vbox#add ~expand:false bu in
+    let () = vbox#add ~expand:true vscroll in
+    let () = vbox#add ~expand:false bd in
+    let () = vbox#add ~expand:false (new spacing ~rows:1 ~cols:1 ()) in
+
+    object(self)
+      inherit hbox as hbox
+      initializer
+        hbox#add ~expand:false signal;
+        hbox#add ~expand:false value;
+        hbox#add ~expand:true wave;
+        hbox#add ~expand:false vbox
+ 
+      val mutable state = no_state 
+
+      method waves = wave'
+      method signals = signal'
+      method values = value'
+ 
+      method set_waves ?(keep_cfg=false) waves = 
+        state <- 
+          (if keep_cfg then W.{ waves with cfg = state.cfg }
+          else waves);
+        wave'#set_waves state;
+        signal'#set_waves state;
+        value'#set_waves state
+
+      method update_wave_cycles = wave'#update_wave_cycles
+
+    end
+
+  let add_scroll name widget = 
+    let vbox = new vbox in
+    let bl, br = button "<", button ">" in
+    let hbox = new hbox in
+    let hscroll = new hscrollbar ~height:1 widget#hscroll in
+    bl#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset-1));
+    br#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset+1));
+    hbox#add ~expand:false bl;
+    hbox#add hscroll; 
+    hbox#add ~expand:false br;
+    vbox#add ~expand:true widget;
+    vbox#add ~expand:false hbox;
+    vbox
+
+  class waveform_lines ?(signals_width=20) ?(values_width=20) () = 
     let wave' = new waves in
     let signal' = new signals signals_width wave' in
     let value' = new values values_width wave' in
