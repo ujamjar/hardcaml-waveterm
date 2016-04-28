@@ -36,7 +36,7 @@ module Make
     method set_waves : W.waves -> unit
   end
 
-  class waveform : ?signals_width:int -> ?values_width:int -> unit -> object
+  class waveform : ?signals_width:int -> ?values_width:int -> ?framed:bool -> unit -> object
     inherit LTerm_widget.hbox
     method waves : waves
     method values : values

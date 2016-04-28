@@ -362,15 +362,21 @@ module Make
 
   let button txt = new button ~brackets:("","") txt 
 
-  let add_scroll name wheel widget = 
+  let add_scroll name framed wheel widget = 
     let vbox = new vbox in
-    let frame = new frame in
-    frame#set_label name;
-    let bl, br = button "<", button ">" in
+    let frame = 
+      if framed then 
+        let frame = new frame in
+        frame#set_label name;
+        frame#set widget;
+        (frame :> t)
+      else
+        (widget :> t)
+    in
+    let bl, br = button "←", button "→" in
     let hbox = new hbox in
     let hscroll = new hscrollbar ~height:1 widget#hscroll in
     hscroll#on_event (wheel widget#hscroll);
-    frame#set widget;
     bl#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset-1));
     br#on_click (fun () -> widget#hscroll#set_offset (widget#hscroll#offset+1));
     hbox#add ~expand:false bl;
@@ -380,18 +386,18 @@ module Make
     vbox#add ~expand:false hbox;
     vbox
 
-  class waveform ?(signals_width=20) ?(values_width=20) () = 
+  class waveform ?(signals_width=20) ?(values_width=20) ?(framed=true) () = 
     let wave' = new waves in
     let signal' = new signals signals_width wave' in
     let value' = new values values_width wave' in
 
-    let signal = add_scroll "Signals" wave'#wheel_event signal' in
-    let value = add_scroll "Values" wave'#wheel_event value' in
-    let wave = add_scroll "Waves" wave'#wheel_event wave' in
+    let signal = add_scroll "Signals" framed wave'#wheel_event signal' in
+    let value = add_scroll "Values" framed wave'#wheel_event value' in
+    let wave = add_scroll "Waves" framed wave'#wheel_event wave' in
 
     let vscroll = new vscrollbar ~width:1 wave'#vscroll in
     let () = vscroll#on_event (wave'#wheel_event wave'#hscroll) in
-    let bu, bd = button "^", button "v" in
+    let bu, bd = button "↑", button "↓" in
     let vbox = new vbox in
     let () = bu#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset-1)) in
     let () = bd#on_click (fun () -> wave'#vscroll#set_offset (wave'#vscroll#offset+1)) in
@@ -404,7 +410,9 @@ module Make
       inherit hbox as hbox
       initializer
         hbox#add ~expand:false signal;
+        if not framed then hbox#add ~expand:false (new vline);
         hbox#add ~expand:false value;
+        if not framed then hbox#add ~expand:false (new vline);
         hbox#add ~expand:true wave;
         hbox#add ~expand:false vbox
  
