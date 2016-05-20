@@ -42,6 +42,7 @@ module Make
     method values : values
     method signals : signals
     method set_waves : ?keep_cfg:bool -> W.waves -> unit
+    method get_waves : W.waves 
     method update_wave_cycles : unit
   end
 
