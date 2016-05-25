@@ -157,31 +157,31 @@ module Make
       let open LTerm_mouse in
       match ev with
       (* mouse wheel *)
-      | LTerm_event.Mouse {button=Button5; control} ->
+      | LTerm_event.Mouse {button=Button5; control; shift=false; meta=false} ->
           (if control then hscroll#set_offset hscroll#incr 
            else vscroll#set_offset vscroll#incr); true
-      | LTerm_event.Mouse {button=Button4; control} ->
+      | LTerm_event.Mouse {button=Button4; control; shift=false; meta=false} ->
           (if control then hscroll#set_offset hscroll#decr 
            else vscroll#set_offset vscroll#decr); true
 
       | _ -> false
 
     method key_scroll_event (hscroll : scrollable) = function
-      | LTerm_event.Key{code = Up;    shift=true; control=false} -> 
+      | LTerm_event.Key{code = Up;    shift=true; control=false; meta=false} -> 
           vscroll#set_offset vscroll#decr; self#queue_draw; true
-      | LTerm_event.Key{code = Down;  shift=true; control=false} -> 
+      | LTerm_event.Key{code = Down;  shift=true; control=false; meta=false} -> 
           vscroll#set_offset vscroll#incr; self#queue_draw; true
-      | LTerm_event.Key{code = Left;  shift=true; control=false} -> 
+      | LTerm_event.Key{code = Left;  shift=true; control=false; meta=false} -> 
           hscroll#set_offset hscroll#decr; self#queue_draw; true
-      | LTerm_event.Key{code = Right; shift=true; control=false} -> 
+      | LTerm_event.Key{code = Right; shift=true; control=false; meta=false} -> 
           hscroll#set_offset hscroll#incr; self#queue_draw; true
-      | LTerm_event.Key{code = Up;    shift=false; control=true} -> 
+      | LTerm_event.Key{code = Up;    shift=false; control=true; meta=false} -> 
           vscroll#set_offset (vscroll#offset-1); self#queue_draw; true
-      | LTerm_event.Key{code = Down;  shift=false; control=true} -> 
+      | LTerm_event.Key{code = Down;  shift=false; control=true; meta=false} -> 
           vscroll#set_offset (vscroll#offset+1); self#queue_draw; true
-      | LTerm_event.Key{code = Left;  shift=false; control=true} -> 
+      | LTerm_event.Key{code = Left;  shift=false; control=true; meta=false} -> 
           hscroll#set_offset (hscroll#offset-1); self#queue_draw; true
-      | LTerm_event.Key{code = Right; shift=false; control=true} -> 
+      | LTerm_event.Key{code = Right; shift=false; control=true; meta=false} -> 
           hscroll#set_offset (hscroll#offset+1); self#queue_draw; true
       | _ -> false
 
