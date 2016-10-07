@@ -1,15 +1,15 @@
 opam-version: "0.1"
 maintainer: "andy.ray@ujamjar.com"
+authors: "andy.ray@ujamjar.com"
 homepage: "https://github.com/ujamjar/hardcaml-waveterm"
-build: [
-  [make "all"]
-  [make "install"]
-]
-remove: [
-  [make "uninstall"]
-]
+dev-repo: "https://github.com/ujamjar/hardcaml-waveterm"
+bug-reports: "https://github.com/ujamjar/hardcaml-waveterm/issues"
+build: [ ["ocaml" "pkg/pkg.ml" "build"] ]
 depends: [
+  "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "topkg" {build}
   "hardcaml"
   "lambda-term"
 ]
-ocaml-version: [ >= "4.01.0" ]
+available: [ "ocaml-version" >= "4.01.0" ]
