@@ -1,3 +1,5 @@
+open Astring
+
 type styler = 
   {
     start : (string -> unit) -> unit;
@@ -67,7 +69,7 @@ let css_classes =
       (str_of_colour bg) (str_of_colour fg) (if b then "bold" else "normal")
   in
   let colours = [ Black; Red; Green; Yellow; Blue; Magenta; Cyan; White ] in
-  let mapcat f = String.concat "\n" (List.map f colours) in
+  let mapcat f = String.concat ~sep:"\n" (List.map f colours) in
   mapcat (fun fg -> mapcat (fun bg -> css fg bg false ^ "\n" ^ css fg bg true))
 
 let term_styler = 
@@ -111,16 +113,16 @@ let utf8 ?(styler=no_styler) os ctx =
   let open Gfx in
   let open In_memory in
   let put c = 
-    if c <= 0x7f then begin os (Bytes.init 1 (fun _ -> Char.chr c))
+    if c <= 0x7f then begin os (Bytes.init 1 (fun _ -> Char.of_byte c))
     end else if c <= 0x7FF then begin
       os (Bytes.init 2 (function
-        | 0 -> Char.chr ((c lsr 6) lor 0b11000000)
-        | _ -> Char.chr ((c land 0b00111111) lor 0b10000000)))
+        | 0 -> Char.of_byte ((c lsr 6) lor 0b11000000)
+        | _ -> Char.of_byte ((c land 0b00111111) lor 0b10000000)))
     end else if c <= 0xFFFF then begin
       os (Bytes.init 3 (function
-        | 0 -> Char.chr ((c lsr 12) lor 0b11100000)
-        | 1 -> Char.chr (((c lsr 6) land 0b00111111) lor 0b10000000)
-        | _ -> Char.chr ((c land 0b00111111) lor 0b10000000)))
+        | 0 -> Char.of_byte ((c lsr 12) lor 0b11100000)
+        | 1 -> Char.of_byte (((c lsr 6) land 0b00111111) lor 0b10000000)
+        | _ -> Char.of_byte ((c land 0b00111111) lor 0b10000000)))
     end else
       failwith "extend utf-8 writer!"
   in

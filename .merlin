@@ -5,4 +5,6 @@ B _build/**
 PKG lambda-term
 PKG hardcaml
 PKG lwt
+PKG astring
+PKG topkg
 EXT lwt

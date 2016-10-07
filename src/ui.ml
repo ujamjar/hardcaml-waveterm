@@ -1,9 +1,8 @@
 module Make 
   (B : HardCaml.Comb.S) 
-  (W : HardCamlWaveTerm.Wave.W with type elt = B.t) 
+  (W : Wave.W with type elt = B.t) 
 = struct
 
-  open HardCamlWaveTerm
   open Lwt
   open LTerm_key
   open CamomileLibrary

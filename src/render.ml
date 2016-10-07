@@ -1,3 +1,5 @@
+open Astring
+
 module Styles = struct
   type t =
     {
@@ -416,19 +418,21 @@ module Make(G : Gfx.Api) (W : Wave.W) = struct
       done
     end
 
+  let ssub s a b = String.Sub.to_string @@ String.sub s ~start:a ~stop:(a+b)
+
   let draw_scroll_string ~ctx ~style ~bounds ~r ~c str = 
     let len = String.length str in
     let w = bounds.Gfx.w in
     if len <= w then draw_string ~ctx ~style ~bounds ~r ~c:0 str
     else
       let c = min c (len-w) in
-      let str = try String.sub str c w with _ -> "" in
+      let str = try ssub str c w with _ -> "" in
       draw_string ~ctx ~style ~bounds ~r ~c:0 str
 
   let draw_scroll_string_right ~ctx ~style ~bounds ~r ~c str =
     let len = String.length str in
     let w = bounds.Gfx.w in
-    let sub_right s o l = try String.sub s (len - l - o) l with _ -> "" in
+    let sub_right s o l = try ssub s (len - l - o) l with _ -> "" in
     let draw_string_right ~ctx ~style ~bounds ~r str = 
       let c = w - String.length str in
       draw_string ~ctx ~style ~bounds ~r ~c str

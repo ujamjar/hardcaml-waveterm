@@ -1,0 +1,6 @@
+version = "0.1"
+description = "HardCaml hardware design library"
+requires = "hardcaml"
+archive(byte) = "HardCamlWaveTerm.cma"
+archive(native) = "HardCamlWaveTerm.cmxa"
+

@@ -1,7 +1,7 @@
 module Brick = struct
 
   open CamomileLibrary
-  open HardCamlWaveTerm.Gfx
+  open Gfx
 
   type ctx = LTerm_draw.context
   type style = LTerm_style.t
@@ -58,5 +58,5 @@ module Brick = struct
 
 end
 
-module Api = HardCamlWaveTerm.Gfx.Build(Brick)
+module Api = Gfx.Build(Brick)
 

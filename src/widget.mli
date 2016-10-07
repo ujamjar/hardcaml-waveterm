@@ -1,10 +1,10 @@
 module Make
   (B : HardCaml.Comb.S) 
-  (W : HardCamlWaveTerm.Wave.W with type elt = B.t) 
+  (W : Wave.W with type elt = B.t) 
 : sig
 
   module G : module type of Gfx_lterm.Api
-  module R : module type of HardCamlWaveTerm.Render.Make(G)(W)
+  module R : module type of Render.Make(G)(W)
 
   class waves : object
     inherit LTerm_widget.t

@@ -1,3 +1,5 @@
+open Astring
+
 module Style = struct
   type colour = Black | Red | Green | Yellow | Blue | Magenta | Cyan | White
   type t = 
@@ -117,7 +119,7 @@ module Build(B : Brick) = struct
   include B
 
   let draw_char ~ctx ~style ~bounds ~r ~c ch = 
-    draw_int ~ctx ~style ~bounds ~r ~c (Char.code ch)
+    draw_int ~ctx ~style ~bounds ~r ~c (Char.to_int ch)
 
   let draw_piece ~ctx ~style ~bounds ~r ~c piece = 
     draw_int ~ctx ~style ~bounds ~r ~c (unicode_of_piece piece)
@@ -203,7 +205,7 @@ module In_memory = struct
   module Api = Build(Brick)
 
   let init ~rows ~cols = 
-    let ch = Char.code ' ' in
+    let ch = Char.to_int ' ' in
     Array.init rows (fun r -> Array.init cols (fun c -> ch, Style.default))
 
 end

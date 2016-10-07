@@ -1,10 +1,10 @@
+open Astring
 
 module Make
   (B : HardCaml.Comb.S) 
-  (W : HardCamlWaveTerm.Wave.W with type elt = B.t) 
+  (W : Wave.W with type elt = B.t) 
 = struct
 
-  open HardCamlWaveTerm
   open Render.Styles
   open Lwt
   open LTerm_key
@@ -22,7 +22,7 @@ module Make
     open Gfx.Style
 
     let get_colour k r = 
-      match String.lowercase (get k r) with
+      match String.Ascii.lowercase (get k r) with
       | "black" -> Some Black
       | "red" -> Some Red
       | "green" -> Some Green
