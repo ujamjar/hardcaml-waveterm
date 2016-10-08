@@ -24,8 +24,8 @@ opam install oasis
 opam pin add -n lambda-term git://github.com/andrewray/lambda-term#move-focus
 opam pin add -n hardcaml git://github.com/ujamjar/hardcaml
 
-opam depext -y $DEPPKGS $OPAMPKG
 opam pin add -n $OPAMPKG -k git .
+opam depext -y $DEPPKGS $OPAMPKG
 
 opam install $DEPPKGS $OPAMPKG
 
