@@ -10,6 +10,7 @@ depends: [
   "ocamlbuild" {build}
   "topkg" {build}
   "hardcaml"
+  "astring"
   "lambda-term"
 ]
 available: [ "ocaml-version" >= "4.01.0" ]
