@@ -9,6 +9,7 @@ depends: [
   "ocamlfind" {build}
   "ocamlbuild" {build}
   "topkg" {build}
+  "camlp4" {build}
   "hardcaml"
   "astring"
   "lambda-term"
