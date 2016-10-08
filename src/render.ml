@@ -40,12 +40,12 @@ module Bounds = struct
 
   let expand_for_border x = 
     let open Gfx in
-    if x.w<>0 && x.h <> 0 then Gfx.{ r=x.r-1; c=x.c-1; w=x.w+2; h=x.h+2 } 
+    if x.w<>0 && x.h <> 0 then Gfx.({ r=x.r-1; c=x.c-1; w=x.w+2; h=x.h+2 }) 
     else x
 
   let shrink_for_border x = 
     let open Gfx in
-    if x.w<>0 && x.h<>0 then Gfx.{ r=x.r+1; c=x.c+1; w=max 0 (x.w-2); h=max 0 (x.h-2) }
+    if x.w<>0 && x.h<>0 then Gfx.({ r=x.r+1; c=x.c+1; w=max 0 (x.w-2); h=max 0 (x.h-2) })
     else x
 
   let fit_to_window 

@@ -47,7 +47,7 @@ module Make
 
   end
   
-  let no_state = W.{ cfg=default; waves=[||] }
+  let no_state = W.({ cfg=default; waves=[||] })
 
   let draw ~draw ?style ~ctx ?border ~focused state = 
     let { rows; cols } = LTerm_draw.size ctx in
@@ -73,7 +73,7 @@ module Make
 
     val mutable max_cycles = 0
     val mutable max_signals = 0
-    val mutable state = W.{ cfg=default; waves=[||] }
+    val mutable state = W.({ cfg=default; waves=[||] })
 
     method document_size = { rows=max_signals; cols=max_cycles }
 
@@ -127,12 +127,12 @@ module Make
       let pick m f = 
         (* XXX yuk *)
         let bounds = 
-          let z = Gfx.{ r=0; c=0; w=0; h=0 } in
-          Render.Bounds.{
-            waves = Gfx.{ r=alloc.row1; c=alloc.col1; 
-                          w=alloc.col2-alloc.col1; h=alloc.row2-alloc.row1 };
+          let z = Gfx.({ r=0; c=0; w=0; h=0 }) in
+          Render.Bounds.({
+            waves = Gfx.({ r=alloc.row1; c=alloc.col1; 
+                          w=alloc.col2-alloc.col1; h=alloc.row2-alloc.row1 });
             values=z; signals=z; status=z;
-          } 
+          })
         in
         match R.pick ~bounds:bounds ~r:m.row ~c:m.col state with
         | R.Wave(cycle,signal) -> f cycle signal; true
@@ -242,7 +242,7 @@ module Make
 
     val mutable max_signal_width = 0
     val mutable max_signals = 0
-    val mutable state = W.{ cfg=default; waves=[||] }
+    val mutable state = W.({ cfg=default; waves=[||] })
 
     method size_request = { rows=0; cols }
 
@@ -290,7 +290,7 @@ module Make
 
     val mutable max_value_width = 0
     val mutable max_signals = 0
-    val mutable state = W.{ cfg=default; waves=[||] }
+    val mutable state = W.({ cfg=default; waves=[||] })
 
     method private set_max_value_width w = 
       if w > max_value_width then begin
@@ -350,7 +350,7 @@ module Make
       let rc = self#resource_class and resources = self#resources in
       style <- { style with status = Resources.get_style rc resources; }
 
-    val mutable state = W.{ cfg=default; waves=[||] }
+    val mutable state = W.({ cfg=default; waves=[||] })
     method set_waves wave = state <- wave
 
     method draw ctx focused = 
@@ -424,7 +424,7 @@ module Make
  
       method set_waves ?(keep_cfg=false) waves = 
         state <- 
-          (if keep_cfg then W.{ waves with cfg = state.cfg }
+          (if keep_cfg then W.({ waves with cfg = state.cfg })
           else waves);
         wave'#set_waves state;
         signal'#set_waves state;
