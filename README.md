@@ -1,5 +1,7 @@
 # Waveform viewer library for HardCaml
 
+[![Build Status](https://travis-ci.org/ujamjar/hardcaml-waveterm.svg?branch=master)](https://travis-ci.org/ujamjar/hardcaml-waveterm)
+
 A text (unicode) based digital waveform viewer library.
 
 ## Features
