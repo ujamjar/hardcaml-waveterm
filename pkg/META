@@ -1,4 +1,4 @@
-version = "0.1"
+version = "0.2"
 description = "HardCaml hardware design library"
 requires = "hardcaml lambda-term astring"
 archive(byte) = "HardCamlWaveTerm.cma"

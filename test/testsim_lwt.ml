@@ -7,7 +7,7 @@
    The standard HardCaml Cs.reset and Cs.cycle calls are simply wrapped with
    Lwt.wrap1, then the testbench written in an (imperative) Lwt style.
 
-   Lastly we use the HardCamlWaveLTerm.Ui.run_testbench function with our
+   Lastly we use the HardCamlWaveTerm.Ui.run_testbench function with our
    testbench thread.  In the code cycles are slowed down with a sleep call 
    so we can watch them get dynamically generated in the viewer! *)
 
@@ -19,7 +19,7 @@ module W = Wave.Make(Wave.Bits(B))
 module Ws = Sim.Make(B)(W)
 module R = Render.Static(W)
 
-module Ui = HardCamlWaveLTerm.Ui.Make(B)(W)
+module Ui = HardCamlWaveTerm.Ui.Make(B)(W)
 
 module I = interface
   a[4] b[4]

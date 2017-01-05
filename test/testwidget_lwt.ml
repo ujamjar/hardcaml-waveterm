@@ -5,7 +5,7 @@ open HardCaml.Api
 module W = HardCamlWaveTerm.Wave.Make(HardCamlWaveTerm.Wave.Bits(B))
 module Ws = HardCamlWaveTerm.Sim.Make(B)(W)
 
-module Widget = HardCamlWaveLTerm.Widget.Make(B)(W)
+module Widget = HardCamlWaveTerm.Widget.Make(B)(W)
 let waveform = new Widget.waveform () 
 
 (* simple hardware design *)

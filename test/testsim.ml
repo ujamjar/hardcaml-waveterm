@@ -20,7 +20,7 @@ module W = Wave.Make(Wave.Bits(B))
 module Ws = Sim.Make(B)(W)
 module R = Render.Static(W)
 
-module Ui = HardCamlWaveLTerm.Ui.Make(B)(W)
+module Ui = HardCamlWaveTerm.Ui.Make(B)(W)
 
 module I = interface
   a[4] b[4]

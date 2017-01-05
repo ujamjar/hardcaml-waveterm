@@ -9,26 +9,26 @@ module Make
   class waves : object
     inherit LTerm_widget.t
     method set_waves : W.waves -> unit
-    method hscroll : LTerm_widget.scrollable
-    method vscroll : LTerm_widget.scrollable
+    method hscroll : LTerm_waveterm_compat.scrollable
+    method vscroll : LTerm_waveterm_compat.scrollable
     method document_size : LTerm_geom.size
     method update_wave_cycles : unit
     method page_size : LTerm_geom.size
-    method wheel_event : LTerm_widget.scrollable -> LTerm_event.t -> bool
+    method wheel_event : LTerm_waveterm_compat.scrollable -> LTerm_event.t -> bool
     method scale_event : LTerm_event.t -> bool
-    method key_scroll_event : LTerm_widget.scrollable -> LTerm_event.t -> bool
+    method key_scroll_event : LTerm_waveterm_compat.scrollable -> LTerm_event.t -> bool
   end
 
   class signals : int -> waves -> object
     inherit LTerm_widget.t
     method set_waves : W.waves -> unit
-    method hscroll : LTerm_widget.scrollable
+    method hscroll : LTerm_waveterm_compat.scrollable
   end
 
   class values : int -> waves -> object
     inherit LTerm_widget.t
     method set_waves : W.waves -> unit
-    method hscroll : LTerm_widget.scrollable
+    method hscroll : LTerm_waveterm_compat.scrollable
   end
 
   class status : object

@@ -9,6 +9,7 @@ module Make
   open Lwt
   open LTerm_key
   open LTerm_widget
+  open LTerm_waveterm_compat
   open LTerm_geom
   open CamomileLibrary
 
@@ -360,13 +361,13 @@ module Make
   
   end
 
-  let button txt = new button ~brackets:("","") txt 
+  let button txt = new LTerm_waveterm_compat.Button.button ~brackets:("","") txt 
 
   let add_scroll name framed wheel widget = 
     let vbox = new vbox in
     let frame = 
       if framed then 
-        let frame = new frame in
+        let frame = new LTerm_waveterm_compat.Frame.frame in
         frame#set_label name;
         frame#set widget;
         (frame :> t)
@@ -404,7 +405,7 @@ module Make
     let () = vbox#add ~expand:false bu in
     let () = vbox#add ~expand:true vscroll in
     let () = vbox#add ~expand:false bd in
-    let () = vbox#add ~expand:false (new spacing ~rows:1 ~cols:1 ()) in
+    let () = vbox#add ~expand:false (new LTerm_waveterm_compat.Spacing.spacing ~rows:1 ~cols:1 ()) in
 
     object(self)
       inherit hbox as hbox

@@ -3,7 +3,7 @@ open LTerm_widget
 
 module B = HardCaml.Bits.Comb.IntbitsList
 module W = HardCamlWaveTerm.Wave.Make(HardCamlWaveTerm.Wave.Bits(B))
-module Widget = HardCamlWaveLTerm.Widget.Make(B)(W)
+module Widget = HardCamlWaveTerm.Widget.Make(B)(W)
 
 let main () =
   let waiter, wakener = wait () in
@@ -24,7 +24,7 @@ let main () =
   (* add status window *)
   let status = new Widget.status in
   status#set_waves waves;
-  let frame = new frame in
+  let frame = new HardCamlWaveTerm.LTerm_waveterm_compat.Frame.frame in
   frame#set status;
   frame#set_label "Status";
   vbox#add ~expand:false frame;

@@ -4,3 +4,5 @@
 <src/*.cmx> and not <src/HardCamlWaveTerm.cmx>: for-pack(HardCamlWaveTerm)
 
 true: package(lambda-term), package(hardcaml), package(astring), bin_annot
+
+<test/*>: syntax(camlp4o), package(hardcaml.syntax), package(lwt.syntax)
