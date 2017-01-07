@@ -1,3 +1,7 @@
+# v0.2.1
+
+* Remove camlp4 - port to ppx
+
 # v0.2.0
 
 * Merge HardCamlWaveTerm and HardCamlWaveLTerm
