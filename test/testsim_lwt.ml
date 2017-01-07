@@ -21,12 +21,16 @@ module R = Render.Static(W)
 
 module Ui = HardCamlWaveTerm.Ui.Make(B)(W)
 
-module I = interface
-  a[4] b[4]
+module I = struct
+  type 'a t = {
+    a : 'a [@bits 4];
+    b : 'a [@bits 4];
+  }[@@deriving hardcaml]
 end
-
-module O = interface 
-  c[4]
+module O = struct
+  type 'a t = {
+    c : 'a [@bits 4]; 
+  }[@@deriving hardcaml]
 end
 
 open I
@@ -42,23 +46,23 @@ let sim, waves = Ws.wrap sim
 
 (* wrap reset and cycle functions in Lwt *)
 let reset sim = Lwt.wrap1 Cs.reset sim
-let cycle sim = lwt () = Lwt.wrap1 Cs.cycle sim in Lwt_unix.sleep 0.1
+let cycle sim = let%lwt () = Lwt.wrap1 Cs.cycle sim in Lwt_unix.sleep 0.1
 
 let testbench () = 
-  lwt () = reset sim in
-  for_lwt l=0 to 7 do
-    for_lwt m=0 to 7 do
+  let%lwt () = reset sim in
+  for%lwt l=0 to 7 do
+    for%lwt m=0 to 7 do
       i.a := B.consti 4 l;
       i.b := B.consti 4 m;
-      lwt () = cycle sim in
+      let%lwt () = cycle sim in
       Lwt.return ()
     done;
   done
 
 let waves = W.{ cfg={default with wave_width=(-1)}; waves }
 
-lwt () = 
-  match_lwt Ui.run_testbench ~timeout:0.5 waves (testbench()) with
+let%lwt () = 
+  match%lwt Ui.run_testbench ~timeout:0.5 waves (testbench()) with
   | None -> Lwt_io.printf "Canceled!\n"
   | Some(x) -> Lwt_io.printf "OK!\n"
 

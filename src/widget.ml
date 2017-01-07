@@ -455,8 +455,8 @@ module Make
 
   let run_widget_testbench ?exit (widget : #t) tb = 
     let ui = run_widget ?exit widget in
-    try_lwt
-      lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
+    try%lwt
+      let%lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
       Lwt.return (Some tb)
     with Lwt.Canceled ->
       Lwt.return None

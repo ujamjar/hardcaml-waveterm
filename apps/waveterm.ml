@@ -27,7 +27,7 @@ open HardCamlWaveTerm
 
 module B = HardCaml.Bits.Comb.IntbitsList
 module W = Wave.Make(HardCamlWaveTerm.Wave.Bits(B))
-module Widget = HardCamlWaveLTerm.Widget.Make(B)(W)
+module Widget = HardCamlWaveTerm.Widget.Make(B)(W)
 
 let num_files = Array.length Sys.argv - 1
 
@@ -55,8 +55,8 @@ let run () =
 
   let buttons = 
     let hbox = new LTerm_widget.hbox in
-    let left = new LTerm_widget.button ~brackets:("<-- ","") (get_file (prev ())) in
-    let right = new LTerm_widget.button ~brackets:(""," -->") (get_file (next ())) in
+    let left = new LTerm_waveterm_compat.Button.button ~brackets:("<-- ","") (get_file (prev ())) in
+    let right = new LTerm_waveterm_compat.Button.button ~brackets:(""," -->") (get_file (next ())) in
     let exit = new LTerm_widget.button "exit" in
     let click f = 
       file_index := f ();
@@ -88,5 +88,5 @@ let run () =
     (fun () -> LTerm_widget.run term top waiter)
     (fun () -> LTerm.disable_mouse term)
   
-lwt () = run ()
+let%lwt () = run ()
 

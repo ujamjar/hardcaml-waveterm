@@ -11,8 +11,17 @@ let waveform = new Widget.waveform ()
 (* simple hardware design *)
 
 let bits = 8
-module I = interface a[bits] b[bits] end
-module O = interface c[bits] end
+module I = struct
+  type 'a t = {
+    a : 'a [@bits bits];
+    b : 'a [@bits bits];
+  }[@@deriving hardcaml]
+end
+module O = struct
+  type 'a t = {
+    c : 'a [@bits bits]; 
+  }[@@deriving hardcaml]
+end
 
 open I
 open O
@@ -28,17 +37,17 @@ let sim, waves = Ws.wrap sim
 
 let reset sim = Lwt.wrap1 Cs.reset sim
 let cycle sim = 
-  lwt () = Lwt.wrap1 Cs.cycle sim in 
+  let%lwt () = Lwt.wrap1 Cs.cycle sim in 
   Lwt_unix.sleep 0.01
 
 let testbench () = 
-  lwt () = reset sim in
-  lwt () = 
-    for_lwt l=0 to (1 lsl bits)-1 do
-      for_lwt m=0 to (1 lsl bits)-1  do
+  let%lwt () = reset sim in
+  let%lwt () = 
+    for%lwt l=0 to (1 lsl bits)-1 do
+      for%lwt m=0 to (1 lsl bits)-1  do
         i.a := B.consti bits l;
         i.b := B.consti bits m;
-        lwt () = cycle sim in
+        let%lwt () = cycle sim in
         Lwt.return ()
       done;
     done
@@ -55,7 +64,7 @@ let main () =
   let waves = W.{ cfg={default with wave_width=(-1)}; waves } in
   waveform#set_waves waves;
   let run = 
-    lwt r = testbench () and () = update_loop () in
+    let%lwt r = testbench () and () = update_loop () in
     Lwt.return r
   in
   Widget.run_widget_testbench waveform run

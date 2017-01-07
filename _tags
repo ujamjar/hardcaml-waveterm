@@ -1,8 +1,9 @@
 "src": include
 
-<src/widget.*> or <src/ui.*>: syntax(camlp4o), package(lwt.syntax)
+<src/widget.*> or <src/ui.*>: package(lwt.ppx)
 <src/*.cmx> and not <src/HardCamlWaveTerm.cmx>: for-pack(HardCamlWaveTerm)
 
 true: package(lambda-term), package(hardcaml), package(astring), bin_annot
 
-<test/*>: syntax(camlp4o), package(hardcaml.syntax), package(lwt.syntax)
+<test/*>: package(lwt.ppx), package(ppx_deriving_hardcaml)
+<apps/*>: package(lwt.ppx)

@@ -173,16 +173,15 @@ module Make
 
   let run ?(style=sdef) ?timeout waves = 
     init ~style waves >>= fun (ui,state,term) ->
-    (try_lwt
-      loop ?timeout (ui,state) 
-    finally
-      LTerm.disable_mouse term >>
-      LTerm_ui.quit ui)
+      ((loop ?timeout (ui,state)) 
+      [%lwt.finally
+        LTerm.disable_mouse term >>
+        LTerm_ui.quit ui])
 
   let run_testbench ?(style=sdef) ?timeout waves tb = 
     let ui = run ~style ?timeout waves in
-    try_lwt
-      lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
+    try%lwt
+      let%lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
       Lwt.return (Some tb)
     with Lwt.Canceled ->
       Lwt.return None

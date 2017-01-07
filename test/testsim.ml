@@ -22,12 +22,16 @@ module R = Render.Static(W)
 
 module Ui = HardCamlWaveTerm.Ui.Make(B)(W)
 
-module I = interface
-  a[4] b[4]
+module I = struct
+  type 'a t = {
+    a : 'a [@bits 4];
+    b : 'a [@bits 4];
+  }[@@deriving hardcaml]
 end
-
-module O = interface 
-  c[4]
+module O = struct
+  type 'a t = {
+    c : 'a [@bits 4]; 
+  }[@@deriving hardcaml]
 end
 
 open I
@@ -59,5 +63,5 @@ let () =
     (R.(draw ~style:Render.Styles.colour_on_black ~cols:200 waves)))
 
 (* show user interface *)
-lwt () = Ui.run waves
+let%lwt () = Ui.run waves
 
