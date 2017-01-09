@@ -2,6 +2,7 @@
 all: build
 
 build:
+	cp pkg/META.in pkg/META
 	ocaml pkg/pkg.ml build
 
 test: build
