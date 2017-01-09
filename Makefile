@@ -25,10 +25,10 @@ tag:
 	git tag -a "v$(VERSION)" -m "v$(VERSION)."
 	git push origin v$(VERSION)
 
-publish:
+prepare:
 	opam publish prepare -r hardcaml $(NAME_VERSION) $(ARCHIVE)
 
-release:
+publish:
 	opam publish submit -r hardcaml $(NAME_VERSION)
 	rm -rf $(NAME_VERSION)
 

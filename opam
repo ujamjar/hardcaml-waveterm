@@ -16,7 +16,7 @@ depends: [
 ]
 available: [ ocaml-version >= "4.02.3" ]
 name: "hardcaml-waveterm"
-version: "0.2.1"
+version: "0.2.2"
 license: "ISC"
 substs:[ "pkg/META" ]
 

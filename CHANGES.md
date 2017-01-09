@@ -1,3 +1,7 @@
+# v0.2.2
+
+* opam-publish
+
 # v0.2.1
 
 * Remove camlp4 - port to ppx
