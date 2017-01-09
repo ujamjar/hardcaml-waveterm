@@ -10,10 +10,26 @@ test: build
 	ocamlbuild -I test testsim.native
 	ocamlbuild -I test testsim_lwt.native
 
-apps:
+apps: build
 	ocamlbuild -I apps wavedraw.native
 	ocamlbuild -I apps waveterm.native
 
 clean:
 	ocamlbuild -clean
+
+VERSION      := $$(opam query --version)
+NAME_VERSION := $$(opam query --name-version)
+ARCHIVE      := $$(opam query --archive)
+
+tag:
+	git tag -a "v$(VERSION)" -m "v$(VERSION)."
+	git push origin v$(VERSION)
+
+publish:
+	opam publish prepare -r hardcaml $(NAME_VERSION) $(ARCHIVE)
+
+release:
+	opam publish submit -r hardcaml $(NAME_VERSION)
+	rm -rf $(NAME_VERSION)
+
 

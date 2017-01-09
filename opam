@@ -15,3 +15,9 @@ depends: [
   "lwt" { >= "2.6.0" }
 ]
 available: [ ocaml-version >= "4.02.3" ]
+
+name: "hardcaml-waveterm"
+version: "0.2.1"
+license: "ISC"
+substs:[ "pkg/META" ]
+
