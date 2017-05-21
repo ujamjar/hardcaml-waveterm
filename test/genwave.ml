@@ -1,7 +1,7 @@
 (* $ utop "test/genwave.ml" *)
-#directory "_build/src"
+(*#directory "_build/src"
 #require "hardcaml"
-#load "HardCamlWaveTerm.cma"
+#load "HardCamlWaveTerm.cma"*)
 
 open HardCamlWaveTerm
 open HardCaml

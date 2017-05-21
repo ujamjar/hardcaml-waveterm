@@ -4,11 +4,10 @@ authors: "andy.ray@ujamjar.com"
 homepage: "https://github.com/ujamjar/hardcaml-waveterm"
 dev-repo: "https://github.com/ujamjar/hardcaml-waveterm.git"
 bug-reports: "https://github.com/ujamjar/hardcaml-waveterm/issues"
-build: [ ["ocaml" "pkg/pkg.ml" "build"] ]
+build: [ ["jbuilder" "build" "-p" name "-j" jobs] ]
 depends: [
   "ocamlfind" {build}
-  "ocamlbuild" {build}
-  "topkg" {build}
+  "jbuilder" {build & >= "1.0+beta8"}
   "hardcaml" { >= "1.2.0" & < "2.0.0" }
   "astring"
   "lambda-term"
@@ -16,7 +15,7 @@ depends: [
 ]
 available: [ ocaml-version >= "4.02.3" ]
 name: "hardcaml-waveterm"
-version: "0.2.2"
+version: "0.3.0"
 license: "ISC"
 substs:[ "pkg/META" ]
 

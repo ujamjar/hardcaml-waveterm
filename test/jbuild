@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executables
+ ((names (testsim testsim_lwt testwidget testwidget_lwt))
+  (libraries (hardcaml-waveterm))
+  (preprocess (action (run bodge_ppx.sh ppx_lwt ${<})))))
+

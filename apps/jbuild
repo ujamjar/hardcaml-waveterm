@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(executables
+ ((names (wavedraw waveterm waveterm_fs))
+  (libraries (hardcaml-waveterm))
+  (preprocess (action (run bodge_ppx.sh ppx_lwt ${<})))))
+

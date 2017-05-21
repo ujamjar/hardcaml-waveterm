@@ -1,5 +1,0 @@
-version = "%{version}%"
-description = "HardCaml hardware design library"
-requires = "hardcaml lambda-term astring"
-archive(byte) = "HardCamlWaveTerm.cma"
-archive(native) = "HardCamlWaveTerm.cmxa"
