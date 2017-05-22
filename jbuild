@@ -1,0 +1,8 @@
+(alias
+ ((name apps)
+  (deps (apps/wavedraw.exe apps/waveterm.exe))))
+
+(alias
+ ((name tests)
+  (deps (test/testsim.exe test/testsim_lwt.exe test/testwidget.exe test/testwidget_lwt.exe))))
+
