@@ -4,4 +4,4 @@
  ((name "HardCamlWaveTerm")
   (public_name "hardcaml-waveterm")
   (libraries (lambda-term hardcaml astring))
-  (preprocess (action (run bodge_ppx.sh ppx_lwt ${<})))))
+  (preprocess (pps (lwt.ppx)))))

@@ -2,21 +2,16 @@
 all: build
 
 build:
-	cp pkg/META.in pkg/META
-	ocaml pkg/pkg.ml build
+	jbuilder build @install
 
-test: build
-	ocamlbuild -I test testwidget.native
-	ocamlbuild -I test testwidget_lwt.native
-	ocamlbuild -I test testsim.native
-	ocamlbuild -I test testsim_lwt.native
+tests: build
+	jbuilder build @tests
 
 apps: build
-	ocamlbuild -I apps wavedraw.native
-	ocamlbuild -I apps waveterm.native
+	jbuilder build @apps
 
 clean:
-	ocamlbuild -clean
+	rm -fr _build
 
 VERSION      := $$(opam query --version)
 NAME_VERSION := $$(opam query --name-version)
