@@ -8,14 +8,14 @@ module LTerm_scroll_impl = struct
   let hbar = 0x2550
   let vbar = 0x2551
 
-  let map_range range1 range2 offset1 = 
-    if range1 = 0 then 0 
+  let map_range range1 range2 offset1 =
+    if range1 = 0 then 0
     else
-      let map_range range1 range2 offset1 = 
-        max 0. (min range2 (range2 *. offset1 /. range1)) 
+      let map_range range1 range2 offset1 =
+        max 0. (min range2 (range2 *. offset1 /. range1))
       in
       let rnd x = int_of_float (x +. 0.5) in
-      rnd @@ map_range 
+      rnd @@ map_range
         (float_of_int range1)
         (float_of_int range2)
         (float_of_int offset1)
@@ -23,23 +23,23 @@ module LTerm_scroll_impl = struct
   class adjustment = object(self)
 
     (* callbacks *)
-    val offset_change_callbacks = Lwt_sequence.create ()
-    method on_offset_change ?switch (f : int -> unit) = 
+    val offset_change_callbacks = LTerm_widget_callbacks.create ()
+    method on_offset_change ?switch (f : int -> unit) =
       LTerm_widget_callbacks.register switch offset_change_callbacks f
 
     val mutable range = 0
     val mutable offset = 0
 
     method range = range
-    method set_range ?(trigger_callback=true) r = 
+    method set_range ?(trigger_callback=true) r =
       range <- max 0 r;
       self#set_offset ~trigger_callback offset (* ensure offset is clipped to the new range *)
 
     method offset = offset
-    method set_offset ?(trigger_callback=true) o = 
+    method set_offset ?(trigger_callback=true) o =
       let o' = max 0 (min (range-1) o) in
       if offset <> o' then begin
-        offset <- o'; 
+        offset <- o';
         if trigger_callback then
           LTerm_widget_callbacks.exec_callbacks offset_change_callbacks o'
       end
@@ -49,15 +49,15 @@ module LTerm_scroll_impl = struct
   class scrollable_adjustment = object(self)
     inherit adjustment as adj
 
-    val scrollbar_change_callbacks = Lwt_sequence.create ()
-    method on_scrollbar_change ?switch (f : unit -> unit) = 
+    val scrollbar_change_callbacks = LTerm_widget_callbacks.create ()
+    method on_scrollbar_change ?switch (f : unit -> unit) =
       LTerm_widget_callbacks.register switch scrollbar_change_callbacks f
 
-    method set_offset ?(trigger_callback=true) o = 
+    method set_offset ?(trigger_callback=true) o =
       adj#set_offset ~trigger_callback o;
       self#set_scroll_bar_offset (self#scroll_of_window self#offset)
 
-    method set_range ?(trigger_callback=true) r = 
+    method set_range ?(trigger_callback=true) r =
       adj#set_range ~trigger_callback r;
       self#set_scroll_bar_offset (self#scroll_of_window self#offset)
 
@@ -67,13 +67,13 @@ module LTerm_scroll_impl = struct
 
     val mutable scroll_bar_mode : [ `fixed of int | `dynamic of int ] = `fixed 5
     method set_scroll_bar_mode m = scroll_bar_mode <- m
-    
-    method private scroll_bar_size_fixed size = 
+
+    method private scroll_bar_size_fixed size =
       let wsize = self#scroll_window_size in
       if wsize <= size then max 1 (wsize-1)
       else max 1 size
 
-    method private scroll_bar_size_dynamic view_size = 
+    method private scroll_bar_size_dynamic view_size =
       if range <= 1 then
         self#scroll_window_size
       else if view_size <= 0 then
@@ -86,18 +86,18 @@ module LTerm_scroll_impl = struct
         int_of_float @@ scroll_size *. view_size /. doc_size
 
     val mutable min_scroll_bar_size : int option = None
-    method private min_scroll_bar_size = 
+    method private min_scroll_bar_size =
       match min_scroll_bar_size with None -> 1 | Some(x) -> x
     method set_min_scroll_bar_size min = min_scroll_bar_size <- Some(min)
-      
+
     val mutable max_scroll_bar_size : int option = None
-    method private max_scroll_bar_size = 
+    method private max_scroll_bar_size =
       match max_scroll_bar_size with None -> self#scroll_window_size | Some(x) -> x
     method set_max_scroll_bar_size max = max_scroll_bar_size <- Some(max)
 
     val mutable scroll_bar_size = 0
     method private scroll_bar_size =
-      let size = 
+      let size =
         max self#min_scroll_bar_size @@ min self#max_scroll_bar_size @@
         match scroll_bar_mode with
         | `fixed size -> self#scroll_bar_size_fixed size
@@ -109,33 +109,33 @@ module LTerm_scroll_impl = struct
       end);
       size
 
-    method private scroll_bar_steps = 
+    method private scroll_bar_steps =
       self#scroll_window_size - self#scroll_bar_size + 1
 
     val mutable scroll_bar_offset = 0
-    method private set_scroll_bar_offset o = 
+    method private set_scroll_bar_offset o =
       let offset = max 0 (min (self#scroll_bar_steps-1) o) in
       (if scroll_bar_offset <> offset then begin
         scroll_bar_offset <- offset;
         LTerm_widget_callbacks.exec_callbacks scrollbar_change_callbacks ()
       end)
 
-    method private window_of_scroll offset = 
+    method private window_of_scroll offset =
       map_range (self#scroll_bar_steps-1) (range-1) offset
 
-    method private scroll_of_window offset = 
+    method private scroll_of_window offset =
       let offset = map_range (range-1) (self#scroll_bar_steps-1) offset in
       offset
 
-    method incr = 
+    method incr =
       if range >= self#scroll_bar_steps then
-        self#window_of_scroll (scroll_bar_offset+1) 
+        self#window_of_scroll (scroll_bar_offset+1)
       else
         (offset+1);
 
-    method decr = 
+    method decr =
       if range >= self#scroll_bar_steps then
-        self#window_of_scroll (scroll_bar_offset-1) 
+        self#window_of_scroll (scroll_bar_offset-1)
       else
         (offset-1);
 
@@ -144,7 +144,7 @@ module LTerm_scroll_impl = struct
     (* scale whole scroll bar area into the number of steps.  The scroll
         bar will not necessarily end up where clicked.  Add a small dead_zone
         at far left and right *)
-    method private mouse_scale_ratio scroll = 
+    method private mouse_scale_ratio scroll =
       let steps, size = self#scroll_bar_steps, self#scroll_bar_size in
       let wsize = self#scroll_window_size in
       let dead_zone = wsize / 5 in (* ~10% at each end *)
@@ -152,20 +152,20 @@ module LTerm_scroll_impl = struct
 
     (* place the middle of the scroll bar at the cursor.  Large scroll bars
         will reduce the clickable area by their size. *)
-    method private mouse_scale_middle scroll = 
+    method private mouse_scale_middle scroll =
       let size = self#scroll_bar_size in
       scroll - (size/2)
 
-    method private mouse_scale_auto scroll = 
-      if self#scroll_bar_size > self#scroll_window_size/2 then 
+    method private mouse_scale_auto scroll =
+      if self#scroll_bar_size > self#scroll_window_size/2 then
         self#mouse_scale_ratio scroll
-      else 
+      else
         self#mouse_scale_middle scroll
 
     val mutable mouse_mode : [ `middle | `ratio | `auto ] = `middle
     method set_mouse_mode m = mouse_mode <- m
 
-    method private scroll_of_mouse scroll = 
+    method private scroll_of_mouse scroll =
       match mouse_mode with
       | `middle -> self#mouse_scale_middle scroll
       | `ratio -> self#mouse_scale_ratio scroll
@@ -174,12 +174,12 @@ module LTerm_scroll_impl = struct
     method mouse_scroll scroll =
       self#window_of_scroll @@ self#scroll_of_mouse scroll
 
-    val mutable page_size = -1 
+    val mutable page_size = -1
     val mutable document_size = -1
 
     method calculate_range page_size document_size = document_size-page_size+1
 
-    method private update_page_and_document_sizes page doc = 
+    method private update_page_and_document_sizes page doc =
       if page_size <> page || document_size <> doc then begin
         page_size <- page;
         document_size <- doc;
@@ -198,15 +198,15 @@ module LTerm_scroll_impl = struct
     method page_prev = self#offset - page_size
     method page_next = self#offset + page_size
 
-    method get_render_params = 
+    method get_render_params =
       scroll_bar_offset,
-      self#scroll_bar_size, 
+      self#scroll_bar_size,
       self#scroll_window_size
 
   end
 
-  class virtual scrollbar 
-    rc default_event_handler 
+  class virtual scrollbar
+    rc default_event_handler
     (adj : #scrollable_adjustment) = object(self)
     inherit t rc
 
@@ -221,12 +221,12 @@ module LTerm_scroll_impl = struct
       let rc = self#resource_class and resources = self#resources in
       focused_style <- LTerm_resources.get_style (rc ^ ".focused") resources;
       unfocused_style <- LTerm_resources.get_style (rc ^ ".unfocused") resources;
-      bar_style <- 
+      bar_style <-
         (match LTerm_resources.get (rc ^ ".barstyle") resources with
         | "filled" -> `filled
         | "outline" | "" -> `outline
         | str -> Printf.ksprintf failwith "invalid scrollbar style");
-      show_track <- 
+      show_track <-
         (match LTerm_resources.get_bool (rc ^ ".track") resources with
         | Some(x) -> x
         | None -> false)
@@ -238,18 +238,18 @@ module LTerm_scroll_impl = struct
     method virtual private scroll_decr_key : LTerm_key.t
 
     (* event handling *)
-    method mouse_event ev = 
+    method mouse_event ev =
       let open LTerm_mouse in
       let alloc = self#allocation in
       match ev with
-      | LTerm_event.Mouse m when m.button=Button1 && 
+      | LTerm_event.Mouse m when m.button=Button1 &&
                                  not m.control && not m.shift && not m.meta ->
         let scroll = self#mouse_offset m alloc in
         adj#set_offset @@ adj#mouse_scroll scroll;
         true
       | _ -> false
 
-    method scroll_key_event ev = 
+    method scroll_key_event ev =
       let open LTerm_key in
       match ev with
       | LTerm_event.Key k when k = self#scroll_decr_key -> adj#set_offset adj#decr; true
@@ -261,7 +261,7 @@ module LTerm_scroll_impl = struct
       let open LTerm_draw in
       let { cols; rows } = size_of_rect rect in
       if cols=1 || rows=1 || bar_style=`filled then
-        let x = 
+        let x =
           CamomileLibrary.UChar.of_int @@
             if bar_style=`filled then 0x2588
             else if cols=1 then vbar
@@ -276,7 +276,7 @@ module LTerm_scroll_impl = struct
         draw_frame ctx rect ~style Light
 
     (* auto-draw *)
-    initializer 
+    initializer
       adj#on_scrollbar_change (fun () -> self#queue_draw)
 
     initializer
@@ -285,26 +285,26 @@ module LTerm_scroll_impl = struct
 
   end
 
-  class vscrollbar 
-    ?(rc="scrollbar") 
+  class vscrollbar
+    ?(rc="scrollbar")
     ?(default_event_handler=true)
-    ?(width=2) 
+    ?(width=2)
     adj = object(self)
     inherit scrollbar rc default_event_handler adj as super
 
     method size_request = { rows=0; cols=width }
 
-    method private mouse_offset m alloc = m.LTerm_mouse.row - alloc.row1 
-    val scroll_incr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Down}) 
+    method private mouse_offset m alloc = m.LTerm_mouse.row - alloc.row1
+    val scroll_incr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Down})
     val scroll_decr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Up})
     method private scroll_incr_key = scroll_incr_key
     method private scroll_decr_key = scroll_decr_key
 
-    method set_allocation r = 
+    method set_allocation r =
       super#set_allocation r;
       adj#set_scroll_window_size (r.row2 - r.row1)
 
-    method draw ctx focused = 
+    method draw ctx focused =
       let open LTerm_draw in
       let focus = (self :> t) = focused in
       let { cols; _ } = size ctx in
@@ -314,7 +314,7 @@ module LTerm_scroll_impl = struct
 
       let offset, scroll_bar_size, scroll_window_size = adj#get_render_params in
 
-      let rect =  
+      let rect =
         { row1 = offset; col1 = 0;
           row2 = offset + scroll_bar_size; col2 = cols }
       in
@@ -324,26 +324,26 @@ module LTerm_scroll_impl = struct
 
   end
 
-  class hscrollbar 
-    ?(rc="scrollbar") 
+  class hscrollbar
+    ?(rc="scrollbar")
     ?(default_event_handler=true)
-    ?(height=2) 
+    ?(height=2)
     adj = object(self)
     inherit scrollbar rc default_event_handler adj as super
-    
+
     method size_request = { rows=height; cols=0 }
 
-    method private mouse_offset m alloc = m.LTerm_mouse.col - alloc.col1 
-    val scroll_incr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Right}) 
+    method private mouse_offset m alloc = m.LTerm_mouse.col - alloc.col1
+    val scroll_incr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Right})
     val scroll_decr_key = LTerm_key.({ control = false; meta = false; shift = true; code=Left})
     method private scroll_incr_key = scroll_incr_key
     method private scroll_decr_key = scroll_decr_key
 
-    method set_allocation r = 
+    method set_allocation r =
       super#set_allocation r;
       adj#set_scroll_window_size (r.col2 - r.col1)
 
-    method draw ctx focused = 
+    method draw ctx focused =
       let open LTerm_draw in
       let focus = (self :> t) = focused in
       let { rows; _ } = size ctx in
@@ -353,7 +353,7 @@ module LTerm_scroll_impl = struct
 
       let offset, scroll_bar_size, scroll_window_size = adj#get_render_params in
 
-      let rect = 
+      let rect =
         { row1 = 0; col1 = offset;
           row2 = rows; col2 = offset + scroll_bar_size }
       in
@@ -363,7 +363,7 @@ module LTerm_scroll_impl = struct
 
   end
 
-  class vslider rng = 
+  class vslider rng =
     let adj = new scrollable_adjustment in
     object(self)
       inherit vscrollbar ~rc:"slider" ~default_event_handler:false ~width:1 adj
@@ -389,10 +389,10 @@ module LTerm_scroll_impl = struct
       method on_offset_change = adj#on_offset_change
     end
 
-  class hslider rng = 
+  class hslider rng =
     let adj = new scrollable_adjustment in
     object(self)
-      inherit hscrollbar ~rc:"slider" ~default_event_handler:false ~height:1 adj 
+      inherit hscrollbar ~rc:"slider" ~default_event_handler:false ~height:1 adj
       initializer
         adj#set_mouse_mode `middle;
         adj#set_scroll_bar_mode (`fixed 1);
@@ -433,7 +433,7 @@ class type scrollable_adjustment = object
   method set_mouse_mode : [ `middle | `ratio | `auto ] -> unit
   method set_min_scroll_bar_size : int -> unit
   method set_max_scroll_bar_size : int -> unit
-  method on_scrollbar_change : ?switch:LTerm_widget_callbacks.switch -> 
+  method on_scrollbar_change : ?switch:LTerm_widget_callbacks.switch ->
     (unit -> unit) -> unit
 end
 
@@ -482,7 +482,7 @@ module Button = struct
 
     method can_focus = true
 
-    val click_callbacks = Lwt_sequence.create ()
+    val click_callbacks = LTerm_widget_callbacks.create ()
 
     method on_click ?switch f =
       LTerm_widget_callbacks.register switch click_callbacks f
@@ -530,7 +530,7 @@ module Button = struct
       let { rows; cols } = LTerm_draw.size ctx in
       let len = Zed_utf8.length label in
       self#apply_style ctx focused;
-      LTerm_draw.draw_string ctx (rows / 2) ((cols - len - brackets_size) / 2) 
+      LTerm_draw.draw_string ctx (rows / 2) ((cols - len - brackets_size) / 2)
         (Printf.sprintf "%s%s%s" bl label br)
   end
 
@@ -543,7 +543,7 @@ module Frame = struct
   open LTerm_mouse
 
 
-  let draw_frame_labelled ctx rect ?style ?(alignment=H_align_left) label connection = 
+  let draw_frame_labelled ctx rect ?style ?(alignment=H_align_left) label connection =
     let open LTerm_draw in
     let sub_opt ctx rect = try Some(sub ctx rect) with Out_of_bounds -> None in
     draw_frame ctx rect ?style connection;
@@ -615,7 +615,7 @@ module Frame = struct
             ()
     val mutable label = ""
     val mutable align = H_align_left
-    method set_label ?(alignment=H_align_left) l = 
+    method set_label ?(alignment=H_align_left) l =
       label <- l;
       align <- alignment
 
@@ -623,7 +623,7 @@ module Frame = struct
       let size = LTerm_draw.size ctx in
       LTerm_draw.fill_style ctx style;
       if size.rows >= 1 && size.cols >= 1 then begin
-        let rect = 
+        let rect =
           { row1 = 0;
             col1 = 0;
             row2 = size.rows;

@@ -1,6 +1,6 @@
-module Make 
-  (B : HardCaml.Comb.S) 
-  (W : Wave.W with type elt = B.t) 
+module Make
+  (B : HardCaml.Comb.S)
+  (W : Wave.W with type elt = B.t)
 = struct
 
   open Lwt
@@ -12,7 +12,7 @@ module Make
 
   let show_status = true
 
-  type state = 
+  type state =
     {
       mutable bounds : Render.Bounds.t;
       waves : W.waves;
@@ -20,7 +20,7 @@ module Make
 
   let rec loop ?timeout (ui,state) =
     let wait_ui = LTerm_ui.wait ui >>= fun ev -> Lwt.return (`event ev) in
-    let sleepy time = Lwt_unix.sleep time >> Lwt.return `timeout in
+    let sleepy time = Lwt_unix.sleep time >>= fun () -> Lwt.return `timeout in
     let process = function
       | `timeout -> LTerm_ui.draw ui; loop ?timeout (ui, state)
       | `event ev -> ui_event ?timeout (ui,state) ev
@@ -30,12 +30,12 @@ module Make
     | None -> wait_ui >>= process
     | Some(timeout) -> Lwt.pick [ sleepy timeout; wait_ui ] >>= process
 
-  and ui_event ?timeout (ui, state) ev = 
+  and ui_event ?timeout (ui, state) ev =
       let waves = state.waves in
       let open W in
-      let draw_loop () = 
+      let draw_loop () =
         LTerm_ui.draw ui;
-        loop ?timeout (ui,state) 
+        loop ?timeout (ui,state)
       in
       match ev with
       (* quit *)
@@ -74,11 +74,11 @@ module Make
         waves.cfg.start_cycle <- max 0 (waves.cfg.start_cycle - 1);
         draw_loop ()
       | LTerm_event.Key{ code = Right; shift = true; control = false; meta = false } ->
-        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
+        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1)
                                      (waves.cfg.start_cycle + 10);
         draw_loop ()
       | LTerm_event.Key{ code = Right; shift = false; control = false; meta = false } ->
-        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1) 
+        waves.cfg.start_cycle <- min (R.get_max_cycles waves - 1)
                                      (waves.cfg.start_cycle + 1);
         draw_loop ()
 
@@ -90,11 +90,11 @@ module Make
         waves.cfg.start_signal <- max 0 (waves.cfg.start_signal - 1);
         draw_loop ()
       | LTerm_event.Key{ code = Down; shift = true } ->
-        waves.cfg.start_signal <- min (R.get_max_signals waves - 1) 
+        waves.cfg.start_signal <- min (R.get_max_signals waves - 1)
                                       (waves.cfg.start_signal + 10);
         draw_loop ()
       | LTerm_event.Key{ code = Down } ->
-        waves.cfg.start_signal <- min (R.get_max_signals waves - 1) 
+        waves.cfg.start_signal <- min (R.get_max_signals waves - 1)
                                       (waves.cfg.start_signal + 1);
         draw_loop ()
 
@@ -147,7 +147,7 @@ module Make
 
   let sdef = Render.Styles.colour_on_black
 
-  let init_state term waves = 
+  let init_state term waves =
     let size = LTerm.size term in
     let bounds = Gfx.({r=0; c=0; w=size.LTerm_geom.cols; h=size.LTerm_geom.rows}) in
     let bounds = Render.Bounds.fit_to_window ~status:show_status bounds in
@@ -157,34 +157,33 @@ module Make
         waves = waves;
       }
 
-  let draw style state ui matrix = 
+  let draw style state ui matrix =
     let size = LTerm_ui.size ui in
     let ctx = LTerm_draw.context matrix size in
     R.draw_ui ~style ~ctx ~bounds:state.bounds state.waves
 
-  let init ?(style=sdef) waves = 
+  let init ?(style=sdef) waves =
     Lazy.force LTerm.stdout >>= fun term ->
-    LTerm.enable_mouse term >>
+    LTerm.enable_mouse term >>= fun () ->
     (* initialization *)
     init_state term waves >>= fun state ->
     (* drawing functon *)
     LTerm_ui.create term (draw style state) >>= fun ui ->
     Lwt.return (ui,state,term)
 
-  let run ?(style=sdef) ?timeout waves = 
+  let run ?(style=sdef) ?timeout waves =
     init ~style waves >>= fun (ui,state,term) ->
-      ((loop ?timeout (ui,state)) 
+      ((loop ?timeout (ui,state))
       [%lwt.finally
-        LTerm.disable_mouse term >>
+        LTerm.disable_mouse term >>= fun () ->
         LTerm_ui.quit ui])
 
-  let run_testbench ?(style=sdef) ?timeout waves tb = 
+  let run_testbench ?(style=sdef) ?timeout waves tb =
     let ui = run ~style ?timeout waves in
     try%lwt
-      let%lwt tb = tb and () = ui >> (Lwt.cancel tb; Lwt.return ()) in
+      let%lwt tb = tb and () = ui >>= fun () -> (Lwt.cancel tb; Lwt.return ()) in
       Lwt.return (Some tb)
     with Lwt.Canceled ->
       Lwt.return None
 
 end
-
